@@ -1,0 +1,237 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CUSTOMER
+  STORE_OWNER
+  ADMIN
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  cart           Json      @default("{}")
+  role           Role      @default(CUSTOMER)
+  isActive       Boolean   @default(true)
+  phone          String?
+  gender         String?
+  dateOfBirth    DateTime?
+
+  // Relations
+  ratings     Rating[]
+  Address     Address[]
+  store       Store?
+  buyerOrders Order[]   @relation("BuyerRelation")
+  accounts    Account[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("User")
+}
+
+// Product now relates to Category and Brand. The old 'category' String is kept temporarily for migration.
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  images      String[]
+  quantity    Int      @default(0)
+  isActive    Boolean  @default(true)
+  storeId     String
+  // New relations
+  categoryId  String?
+  brandId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  categoryRef Category?   @relation(fields: [categoryId], references: [id])
+  brandRef    Brand?      @relation(fields: [brandId], references: [id])
+  orderItems  OrderItem[]
+  rating      Rating[]
+}
+
+enum OrderStatus {
+  ORDER_PLACED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+}
+
+enum PaymentMethod {
+  COD
+  STRIPE
+}
+
+// Required for creating an Order: total, userId, storeId, addressId, isPaid, paymentMethod, isCouponUsed, coupon (JSON), orderItems (nested)
+
+model Order {
+  id            String        @id @default(cuid())
+  paymentIntentId String?       @unique
+  total         Float
+  status        OrderStatus   @default(ORDER_PLACED)
+  userId        String
+  storeId       String
+  addressId     String
+  isPaid        Boolean       @default(false)
+  paymentMethod PaymentMethod
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  isCouponUsed  Boolean       @default(false)
+  coupon        Json          @default("{}")
+  orderItems    OrderItem[]
+
+  // Relations
+  user    User    @relation("BuyerRelation", fields: [userId], references: [id])
+  store   Store   @relation(fields: [storeId], references: [id])
+  address Address @relation(fields: [addressId], references: [id])
+}
+
+// Required for creating an OrderItem: orderId, productId, quantity, price
+
+model OrderItem {
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@id([orderId, productId])
+}
+
+// Required for creating a Rating: rating, review, userId, productId
+
+model Rating {
+  id        String   @id @default(cuid())
+  rating    Int
+  review    String
+  userId    String
+  productId String
+  orderId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, orderId])
+}
+
+// Required for creating an Address: userId, name, street, city, state, country, phone
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  street    String
+  city      String
+  state     String
+  country   String
+  phone     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  Order Order[]
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Required for creating a Coupon: code, description, discount, forNewUser, isPublic, expiresAt
+
+model Coupon {
+  code        String   @id
+  description String
+  discount    Float
+  forNewUser  Boolean
+  forMember   Boolean  @default(false)
+  isPublic    Boolean
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+}
+
+// Category and Brand models for product taxonomy
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  logo        String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+// Required for creating a Store: userId, name, username, email, contact, logo, description, address (optional: , status, isActive)
+
+model Store {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  name        String
+  description String
+  username    String   @unique
+  address     String
+  status      String   @default("pending")
+  isActive    Boolean  @default(false)
+  logo        String
+  email       String
+  contact     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Product Product[]
+  Order   Order[]
+  user    User      @relation(fields: [userId], references: [id])
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+
+

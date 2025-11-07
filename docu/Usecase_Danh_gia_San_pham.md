@@ -1,0 +1,13 @@
+# Bảng Usecase Chi tiết: Đánh giá Sản phẩm
+
+| Tên mục | Nội dung |
+| :--- | :--- |
+| **Tên usecase** | Đánh giá Sản phẩm |
+| **Actor** | Khách hàng (Customer) |
+| **Mô tả** | Cho phép khách hàng đã mua sản phẩm có thể để lại đánh giá, bao gồm xếp hạng sao và một bài bình luận chi tiết, để chia sẻ trải nghiệm của họ với những người mua khác. |
+| **Điều kiện kích hoạt** | Khách hàng nhấn vào nút "Đánh giá" bên cạnh một sản phẩm trong một đơn hàng đã được giao thành công trên trang "Lịch sử đơn hàng". |
+| **Tiền điều kiện** | 1. Khách hàng đã đăng nhập vào hệ thống.<br>2. Khách hàng đã mua sản phẩm này trong một đơn hàng có trạng thái là "DELIVERED" (Đã giao hàng).<br>3. Khách hàng chưa từng đánh giá sản phẩm này cho đơn hàng cụ thể đó. |
+| **Hậu điều kiện** | **Thành công:**<br>- Đánh giá (gồm xếp hạng sao và bình luận) được lưu vào cơ sở dữ liệu, liên kết với sản phẩm, người dùng và đơn hàng.<br>- Đánh giá mới sẽ được hiển thị trên trang chi tiết sản phẩm.<br><br>**Thất bại:**<br>- Đánh giá không được lưu.<br>- Khách hàng nhận được thông báo lỗi và vẫn ở trong giao diện đánh giá. |
+| **Luồng sự kiện chính** | 1. Hệ thống hiển thị nút "Đánh giá" cho các sản phẩm đủ điều kiện trên trang "Lịch sử đơn hàng".<br>2. Khách hàng nhấn nút "Đánh giá".<br>3. Hệ thống hiển thị một cửa sổ (modal) đánh giá, bao gồm 5 ngôi sao để chọn và một ô văn bản để viết bình luận.<br>4. Khách hàng chọn số sao (từ 1 đến 5).<br>5. Khách hàng (tùy chọn) nhập nội dung bình luận vào ô văn bản.<br>6. Khách hàng nhấn nút "Gửi đánh giá".<br>7. Hệ thống kiểm tra tính hợp lệ của dữ liệu (phải chọn ít nhất 1 sao).<br>8. Hệ thống gửi và lưu đánh giá vào cơ sở dữ liệu.<br>9. Hệ thống đóng cửa sổ đánh giá và hiển thị thông báo "Cảm ơn bạn đã đánh giá sản phẩm!".<br>10. Hệ thống ẩn hoặc vô hiệu hóa nút "Đánh giá" cho sản phẩm vừa được đánh giá trong đơn hàng đó.<br>11. Usecase kết thúc. |
+| **Luồng sự kiện phụ** | **7a. Dữ liệu không hợp lệ:**<br>   1. Tại bước 7, hệ thống phát hiện khách hàng chưa chọn sao.<br>   2. Hệ thống hiển thị thông báo lỗi ngay trên cửa sổ đánh giá, ví dụ: "Vui lòng chọn số sao xếp hạng".<br>   3. Luồng sự kiện quay lại bước 4.<br><br>**8a. Lỗi hệ thống khi lưu:**<br>   1. Tại bước 8, có lỗi xảy ra khi lưu đánh giá vào cơ sở dữ liệu.<br>   2. Hệ thống hiển thị thông báo lỗi chung: "Đã có lỗi xảy ra, vui lòng thử lại sau".<br>   3. Cửa sổ đánh giá vẫn mở để khách hàng có thể thử lại. |
+| **Các yêu cầu đặc biệt** | - Chỉ những khách hàng đã mua và nhận hàng thành công mới có quyền đánh giá sản phẩm.<br>- Mỗi khách hàng chỉ được đánh giá một sản phẩm một lần cho mỗi đơn hàng cụ thể để đảm bảo tính xác thực và tránh spam. |

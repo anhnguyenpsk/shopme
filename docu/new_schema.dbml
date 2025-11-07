@@ -1,0 +1,181 @@
+//// ----------------------------------------------------
+//// SHOPME DATABASE SCHEMA (UPDATED)
+//// Generated from Prisma Schema - 2025-11-05
+//// ----------------------------------------------------
+
+Project ShopMe {
+  database_type: 'PostgreSQL'
+  Note: 'Schema for a multi-vendor e-commerce platform'
+}
+
+// --- Enums ---
+
+Enum Role {
+  CUSTOMER
+  STORE_OWNER
+  ADMIN
+}
+
+Enum OrderStatus {
+  ORDER_PLACED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+}
+
+Enum PaymentMethod {
+  COD
+  STRIPE
+}
+
+// --- Tables ---
+
+Table User {
+  id string [pk]
+  name string
+  email string [unique]
+  emailVerified datetime
+  image string
+  hashedPassword string
+  cart json [default: `{}`]
+  role Role [default: 'CUSTOMER', not null]
+  isActive bool [default: true, not null]
+  phone string
+  gender string
+  dateOfBirth datetime
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [default: `now()`, not null, note: 'updated automatically']
+}
+
+Table Store {
+  id string [pk]
+  userId string [unique, not null, ref: - User.id]
+  name string [not null]
+  description string [not null]
+  username string [unique, not null]
+  address string [not null]
+  status string [default: 'pending', not null]
+  isActive bool [default: false, not null]
+  logo string [not null]
+  email string [not null]
+  contact string [not null]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+}
+
+Table Product {
+  id string [pk]
+  name string [not null]
+  description string [not null]
+  price float [not null]
+  images string[] [not null]
+  quantity int [default: 0, not null]
+  isActive bool [default: true, not null]
+  storeId string [not null, ref: > Store.id]
+  categoryId string [ref: > Category.id]
+  brandId string [ref: > Brand.id]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+}
+
+Table Category {
+  id string [pk]
+  name string [unique, not null]
+  slug string [unique, not null]
+  isActive bool [default: true, not null]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+}
+
+Table Brand {
+  id string [pk]
+  name string [unique, not null]
+  slug string [unique, not null]
+  logo string [not null]
+  description string
+  isActive bool [default: true, not null]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+}
+
+Table "Order" {
+  id string [pk]
+  paymentIntentId string [unique]
+  total float [not null]
+  status OrderStatus [default: 'ORDER_PLACED', not null]
+  userId string [not null, ref: > User.id]
+  storeId string [not null, ref: > Store.id]
+  addressId string [not null, ref: > Address.id]
+  isPaid bool [default: false, not null]
+  paymentMethod PaymentMethod [not null]
+  isCouponUsed bool [default: false, not null]
+  coupon json [default: `{}`, not null]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+}
+
+Table OrderItem {
+  orderId string [pk, ref: > "Order".id]
+  productId string [pk, ref: > Product.id]
+  quantity int [not null]
+  price float [not null]
+}
+
+Table Address {
+  id string [pk]
+  userId string [not null, ref: > User.id]
+  name string [not null]
+  street string [not null]
+  city string [not null]
+  state string [not null]
+  country string [not null]
+  phone string [not null]
+  createdAt datetime [default: `now()`, not null]
+}
+
+Table Rating {
+  id string [pk]
+  rating int [not null]
+  review string [not null]
+  userId string [not null, ref: > User.id]
+  productId string [not null, ref: > Product.id]
+  orderId string [not null]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+  
+  Indexes {
+    (userId, productId, orderId) [unique]
+  }
+}
+
+Table Coupon {
+  code string [pk]
+  description string [not null]
+  discount float [not null]
+  forNewUser bool [not null]
+  forMember bool [default: false, not null]
+  isPublic bool [not null]
+  expiresAt datetime [not null]
+  createdAt datetime [default: `now()`, not null]
+}
+
+// --- NextAuth.js Tables ---
+
+Table Account {
+  id string [pk]
+  userId string [not null, ref: > User.id]
+  type string [not null]
+  provider string [not null]
+  providerAccountId string [not null]
+  refresh_token Text
+  access_token Text
+  expires_at int
+  token_type string
+  scope string
+  id_token Text
+  session_state string
+
+  Indexes {
+    (provider, providerAccountId) [unique]
+  }
+}

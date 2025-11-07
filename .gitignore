@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+# IDE
+.cursor/
+
 # testing
 /coverage
 
@@ -23,6 +26,9 @@
 # misc
 .DS_Store
 *.pem
+
+# uploads
+/public/uploads/
 
 # debug
 npm-debug.log*

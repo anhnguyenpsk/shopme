@@ -1,0 +1,13 @@
+# Bảng Usecase Chi tiết: Đăng ký Cửa hàng
+
+| Tên mục | Nội dung |
+| :--- | :--- |
+| **Tên usecase** | Đăng ký Cửa hàng |
+| **Actor** | Người dùng (User) |
+| **Mô tả** | Cho phép một người dùng đã đăng ký có thể nộp đơn để trở thành nhà bán hàng (Vendor) bằng cách cung cấp thông tin chi tiết về cửa hàng của họ để Admin xem xét và phê duyệt. |
+| **Điều kiện kích hoạt** | Người dùng nhấn vào liên kết hoặc nút "Become a Seller" / "Tạo cửa hàng" trên trang web. |
+| **Tiền điều kiện** | 1. Người dùng phải đã đăng nhập vào hệ thống với vai trò "CUSTOMER".<br>2. Người dùng chưa từng gửi đơn đăng ký cửa hàng nào trước đây. |
+| **Hậu điều kiện** | **Thành công:**<br>- Một yêu cầu tạo cửa hàng mới được lưu trong hệ thống với trạng thái "Chờ phê duyệt" (Pending).<br>- Vai trò của người dùng được cập nhật thành "STORE_OWNER".<br>- Người dùng nhận được thông báo rằng đơn đã được gửi thành công.<br><br>**Thất bại:**<br>- Đơn đăng ký không được tạo.<br>- Người dùng ở lại trang đăng ký và nhận được thông báo lỗi cụ thể (ví dụ: tên người dùng đã tồn tại, thiếu thông tin). |
+| **Luồng sự kiện chính** | 1. Người dùng truy cập trang "Đăng ký Cửa hàng".<br>2. Hệ thống hiển thị form đăng ký, yêu cầu các thông tin: Tên cửa hàng, Tên người dùng (username), Mô tả, Email, Số điện thoại, Địa chỉ, và Logo.<br>3. Người dùng điền đầy đủ thông tin vào form.<br>4. Người dùng tải lên file ảnh cho logo cửa hàng.<br>5. Người dùng nhấn nút "Gửi đơn" (Submit).<br>6. Hệ thống kiểm tra tính hợp lệ của tất cả các trường dữ liệu.<br>7. Hệ thống kiểm tra xem `username` đã tồn tại hay chưa.<br>8. Hệ thống lưu thông tin cửa hàng vào cơ sở dữ liệu với trạng thái "Pending" và cập nhật vai trò người dùng thành "STORE_OWNER".<br>9. Hệ thống hiển thị thông báo "Đơn đăng ký của bạn đã được gửi thành công và đang chờ xét duyệt."<br>10. Usecase kết thúc. |
+| **Luồng sự kiện phụ** | **1a. Người dùng chưa đăng nhập:**<br>   1. Tại bước 1, hệ thống phát hiện người dùng chưa đăng nhập.<br>   2. Hệ thống chuyển hướng người dùng đến trang Đăng nhập.<br><br>**6a. Dữ liệu không hợp lệ:**<br>   1. Tại bước 6, hệ thống phát hiện có trường thông tin bắt buộc bị bỏ trống.<br>   2. Hệ thống hiển thị lỗi chi tiết ngay tại các trường bị sai.<br>   3. Luồng sự kiện quay lại bước 3.<br><br>**7a. Tên người dùng (username) đã tồn tại:**<br>   1. Tại bước 7, hệ thống phát hiện `username` đã có người khác sử dụng.<br>   2. Hệ thống hiển thị thông báo lỗi: "Tên người dùng này đã được sử dụng. Vui lòng chọn tên khác."<br>   3. Luồng sự kiện quay lại bước 3. |
+| **Các yêu cầu đặc biệt** | - Tên người dùng (username) của cửa hàng phải là duy nhất trên toàn hệ thống và không phân biệt chữ hoa/thường.<br>- Logo cửa hàng phải được tải lên và lưu trữ thành công trước khi gửi đơn. |
