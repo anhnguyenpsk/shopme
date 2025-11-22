@@ -72,7 +72,7 @@ npm run dev
 - **Checkout & Payment**
   - Multiple payment methods (Cash on Delivery, Stripe)
   - Secure address management
-  - Coupon code support
+  - Voucher support
   - Order splitting by vendor
 
 - **Order Management**
@@ -128,7 +128,7 @@ npm run dev
 - **Content Management**
   - Manage product categories
   - Manage brands (with logos)
-  - Create and manage coupon codes
+  - Create and manage vouchers
   - System-wide product oversight
 
 - **Platform Analytics**
@@ -351,7 +351,7 @@ shopme/
 │   │   ├── approve/              # Store approval
 │   │   ├── brands/               # Brand management
 │   │   ├── categories/           # Category management
-│   │   ├── coupons/              # Coupon management
+│   │   ├── vouchers/              # Voucher management
 │   │   ├── dashboard/            # Admin dashboard
 │   │   ├── orders/               # All orders
 │   │   ├── products/             # All products
@@ -444,7 +444,7 @@ shopme/
 - Approve/reject stores
 - Manage all users
 - Manage categories and brands
-- Create coupon codes
+- Create vouchers
 - View system-wide analytics
 - Moderate content
 
@@ -569,7 +569,6 @@ ShopMe supports multiple independent stores on a single platform:
 | PUT | `/api/admin/users/[id]` | Update user status | Yes (Admin) |
 | POST | `/api/admin/categories` | Create category | Yes (Admin) |
 | POST | `/api/admin/brands` | Create brand | Yes (Admin) |
-| POST | `/api/admin/coupons` | Create coupon | Yes (Admin) |
 
 ### Product Endpoints
 
@@ -616,7 +615,7 @@ ShopMe supports multiple independent stores on a single platform:
 - Relations: Store, Category, Brand, OrderItems, Ratings
 
 **Order**: Customer purchases
-- Fields: id, total, status, payment info, coupon
+- Fields: id, total, status, payment info
 - Relations: User, Store, Address, OrderItems (1:N)
 
 **OrderItem**: Individual products in an order
@@ -629,8 +628,8 @@ ShopMe supports multiple independent stores on a single platform:
 **Brand**: Product brands
 - Fields: id, name, slug, logo, description, isActive
 
-**Coupon**: Discount codes
-- Fields: code, description, discount, conditions, expiresAt
+**Voucher**: Discount codes/campaigns
+- Fields: id, name, description, discount_type, discount_value, start_date, end_date, usage_limits
 
 **Address**: Delivery addresses
 - Fields: id, name, street, city, state, country, phone

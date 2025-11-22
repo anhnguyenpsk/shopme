@@ -15,3 +15,6 @@
 | 11| `contact` | Not Null | `text` | Số điện thoại hoặc thông tin liên hệ khác. |
 | 12| `createdAt` | Not Null, Default: `now()` | `timestamp(3)` | Ngày tạo cửa hàng. |
 | 13| `updatedAt` | Not Null, Auto-updated | `timestamp(3)` | Ngày cập nhật thông tin lần cuối. |
+
+**Quan hệ:**
+- `Store` 1-N `VoucherCampaign` (Một cửa hàng có thể tạo ra nhiều chiến dịch voucher)

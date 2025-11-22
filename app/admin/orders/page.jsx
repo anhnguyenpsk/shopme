@@ -457,12 +457,7 @@ export default function OrdersManagement() {
                       {selectedOrder.isPaid ? 'Paid' : 'Unpaid'}
                     </Badge>
                   </div>
-                  {selectedOrder.isCouponUsed && (
-                    <div className="flex justify-between">
-                      <span>Coupon Applied:</span>
-                      <span className="font-medium">Yes</span>
-                    </div>
-                  )}
+
                   <div className="flex justify-between pt-2 border-t font-semibold text-base">
                     <span>Total:</span>
                     <span>{formatVND(selectedOrder.total)}</span>

@@ -21,7 +21,7 @@ const AdminSidebar = () => {
         { name: 'Categories', href: '/admin/categories', icon: Folder },
         { name: 'Stores', href: '/admin/stores', icon: StoreIcon },
         { name: 'Approve Store', href: '/admin/approve', icon: ShieldCheckIcon },
-        { name: 'Coupons', href: '/admin/coupons', icon: TicketPercentIcon  },
+        { name: 'Vouchers', href: '/admin/vouchers', icon: TicketPercentIcon  },
         { name: 'Inngest Test', href: '/admin/inngest-test', icon: ZapIcon  },
     ]
 

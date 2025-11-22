@@ -7,6 +7,7 @@ import Loading from "@/components/Loading"
 import Image from "next/image"
 import axios from "axios"
 import toast from "react-hot-toast"
+import PublicVoucherList from "@/components/vouchers/PublicVoucherList"
 
 export default function StoreShop() {
 
@@ -87,6 +88,9 @@ export default function StoreShop() {
                     </div>
                 </div>
             )}
+
+            {/* Vouchers */}
+            {storeInfo && <PublicVoucherList storeId={storeInfo.id} />}
 
             {/* Store Status Warning */}
             {storeInfo && !storeInfo.isActive && (

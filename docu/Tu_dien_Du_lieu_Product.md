@@ -14,3 +14,6 @@
 | 11 | `brandId` | Foreign Key, Nullable | `text` | Khóa ngoại liên kết đến bảng `Brand`. |
 | 12 | `createdAt` | Not Null, Default: `now()` | `timestamp(3)` | Ngày tạo sản phẩm. |
 | 13 | `updatedAt` | Not Null, Auto-updated | `timestamp(3)` | Ngày cập nhật sản phẩm lần cuối. |
+
+**Quan hệ:**
+- `Product` N-M `VoucherCampaign` (Một sản phẩm có thể thuộc về nhiều chiến dịch voucher, và một chiến dịch có thể áp dụng cho nhiều sản phẩm)

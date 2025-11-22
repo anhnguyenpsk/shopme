@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import OrderItem from "@/components/OrderItem";
 import PageTitle from "@/components/PageTitle";
+import VoucherWallet from "@/components/vouchers/VoucherWallet";
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
@@ -323,14 +324,24 @@ export default function AccountPage() {
             >
               My Addresses
             </button>
+            <button
+              onClick={() => setActiveTab("vouchers")}
+              className={`${
+                activeTab === "vouchers"
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              My Vouchers
+            </button>
           </nav>
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div>
           {/* Profile Tab */}
           {activeTab === "profile" && (
-            <div>
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 Personal Information
               </h2>
@@ -465,7 +476,7 @@ export default function AccountPage() {
 
           {/* Purchase Tab */}
           {activeTab === "purchase" && (
-            <div>
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
                 My Orders
               </h2>
@@ -485,7 +496,7 @@ export default function AccountPage() {
 
           {/* Addresses Tab */}
           {activeTab === "addresses" && (
-            <div>
+            <div className="bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                   My Addresses
@@ -657,6 +668,9 @@ export default function AccountPage() {
               )}
             </div>
           )}
+
+          {/* Vouchers Tab */}
+          {activeTab === "vouchers" && <VoucherWallet />}
         </div>
       </div>
     </div>

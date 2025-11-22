@@ -46,7 +46,7 @@ function InnerCheckoutForm({ onSuccess }) {
   )
 }
 
-export default function StripePayment({ amount, onSuccess, addressId, items, coupon }) {
+export default function StripePayment({ amount, onSuccess, addressId, items, userVoucherIds }) {
   const [clientSecret, setClientSecret] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -65,7 +65,7 @@ export default function StripePayment({ amount, onSuccess, addressId, items, cou
         const res = await fetch("/api/stripe/create-payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: Math.round(amount || 0), addressId, items, coupon })
+          body: JSON.stringify({ amount: Math.round(amount || 0), addressId, items, userVoucherIds })
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data?.error || "Failed to init payment")
@@ -77,7 +77,7 @@ export default function StripePayment({ amount, onSuccess, addressId, items, cou
       }
     }
     if (amount > 0) createPI()
-  }, [amount])
+  }, [amount, addressId, items, userVoucherIds])
 
   if (!amount || amount <= 0) return <p className="text-sm text-slate-500">Invalid amount</p>
   if (loading) return <p className="text-sm text-slate-500">Preparing Stripe checkout...</p>

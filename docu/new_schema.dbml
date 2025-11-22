@@ -28,6 +28,23 @@ Enum PaymentMethod {
   STRIPE
 }
 
+Enum VoucherType {
+  SHOP
+  PLATFORM
+  SHIPPING
+}
+
+Enum DiscountType {
+  FIXED_AMOUNT
+  PERCENTAGE
+}
+
+Enum UserVoucherStatus {
+  AVAILABLE
+  USED
+  EXPIRED
+}
+
 // --- Tables ---
 
 Table User {
@@ -102,14 +119,13 @@ Table "Order" {
   id string [pk]
   paymentIntentId string [unique]
   total float [not null]
+  totalDiscountAmount float [default: 0, not null]
   status OrderStatus [default: 'ORDER_PLACED', not null]
   userId string [not null, ref: > User.id]
   storeId string [not null, ref: > Store.id]
   addressId string [not null, ref: > Address.id]
   isPaid bool [default: false, not null]
   paymentMethod PaymentMethod [not null]
-  isCouponUsed bool [default: false, not null]
-  coupon json [default: `{}`, not null]
   createdAt datetime [default: `now()`, not null]
   updatedAt datetime [not null, note: 'updated automatically']
 }
@@ -148,15 +164,38 @@ Table Rating {
   }
 }
 
-Table Coupon {
-  code string [pk]
-  description string [not null]
-  discount float [not null]
-  forNewUser bool [not null]
-  forMember bool [default: false, not null]
-  isPublic bool [not null]
-  expiresAt datetime [not null]
+Table VoucherCampaign {
+  id string [pk]
+  name string [not null]
+  description string
+  voucher_code string [unique]
+  voucher_type VoucherType [not null]
+  discount_type DiscountType [not null]
+  discount_value float [not null]
+  max_discount_amount float
+  min_order_value float [default: 0, not null]
+  start_date datetime [not null]
+  end_date datetime [not null]
+  total_usage_limit int [not null]
+  user_usage_limit int [default: 1, not null]
+  status string [default: 'ACTIVE', not null]
+  created_by_shop_id string [ref: > Store.id]
   createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+}
+
+Table UserVoucher {
+  id string [pk]
+  status UserVoucherStatus [default: 'AVAILABLE', not null]
+  collected_date datetime [default: `now()`, not null]
+  used_date datetime
+  user_id string [not null, ref: > User.id]
+  voucher_campaign_id string [not null, ref: > VoucherCampaign.id]
+  used_in_order_id string [ref: > "Order".id]
+
+  Indexes {
+    (user_id, voucher_campaign_id, used_in_order_id) [unique]
+  }
 }
 
 // --- NextAuth.js Tables ---
@@ -179,3 +218,4 @@ Table Account {
     (provider, providerAccountId) [unique]
   }
 }
+

@@ -1,4 +1,4 @@
-import { PlusIcon, SquarePenIcon, XIcon } from 'lucide-react';
+import { PlusIcon, TicketIcon, XIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import AddressModal from './AddressModal';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { formatVND } from '../lib/currency';
 import StripePayment from './StripePayment';
 import { setAddresses, setSelectedAddress, deleteAddress as deleteAddressAction } from '@/lib/features/address/addressSlice';
+import VoucherSelectionModal from './vouchers/VoucherSelectionModal';
+import { Button } from './ui/button';
 
 const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
 
@@ -15,6 +17,8 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
 
     const addressList = useSelector(state => state.address?.addresses) || [];
     const selectedAddress = useSelector(state => state.address?.selectedAddress) || null;
+    const cartItems = useSelector(state => state.cart.items);
+
 
     useEffect(() => {
         // Load addresses from backend once when component mounts
@@ -35,13 +39,11 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
     const [paymentMethod, setPaymentMethod] = useState('COD');
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
-    const [couponCodeInput, setCouponCodeInput] = useState('');
-    const [coupon, setCoupon] = useState('');
+    
+    // New Voucher State
+    const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+    const [selectedVouchers, setSelectedVouchers] = useState({ SHOP: null, PLATFORM: null, SHIPPING: null });
 
-    const handleCouponCode = async (event) => {
-        event.preventDefault();
-
-    }
 
     const finalizeOrder = async (isPaid, paymentIntentId = null) => {
         if (!selectedAddress?.id) {
@@ -53,7 +55,7 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
             total: payableTotal,
             paymentMethod: paymentMethod === 'STRIPE' ? 'STRIPE' : 'COD',
             isPaid: !!isPaid,
-            coupon: coupon || null,
+            userVoucherIds: Object.values(selectedVouchers).filter(Boolean).map(v => v.userVoucherId),
             paymentIntentId: paymentIntentId || null,
         }
         const res = await fetch('/api/orders', {
@@ -81,22 +83,39 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
         router.push('/orders')
     }
 
+    const handlePlaceFreeOrder = async (e) => {
+        e.preventDefault();
+        // For 100% discounted orders, finalize as PAID
+        const orders = await finalizeOrder(true);
+        if (onOrderSuccess) {
+            onOrderSuccess(orders);
+        }
+        toast.success('Order placed successfully!');
+        router.push('/orders');
+    }
+
     const subTotal = totalPrice;
-    const discount = coupon ? (coupon.discount / 100 * totalPrice) : 0;
-    const payableTotal = Math.max(0, Math.round(subTotal - discount));
+    const totalDiscount = Object.values(selectedVouchers).reduce((acc, v) => acc + (v?.discountAmount || 0), 0);
+    const payableTotal = Math.max(0, Math.round(subTotal - totalDiscount));
 
     return (
         <div className='w-full max-w-lg lg:max-w-[340px] bg-slate-50/30 border border-slate-200 text-slate-500 text-sm rounded-xl p-7'>
             <h2 className='text-xl font-medium text-slate-600'>Payment Summary</h2>
-            <p className='text-slate-400 text-xs my-4'>Payment Method</p>
-            <div className='flex gap-2 items-center'>
-                <input type="radio" id="COD" onChange={() => setPaymentMethod('COD')} checked={paymentMethod === 'COD'} className='accent-gray-500' />
-                <label htmlFor="COD" className='cursor-pointer'>COD</label>
-            </div>
-            <div className='flex gap-2 items-center mt-1'>
-                <input type="radio" id="STRIPE" name='payment' onChange={() => setPaymentMethod('STRIPE')} checked={paymentMethod === 'STRIPE'} className='accent-gray-500' />
-                <label htmlFor="STRIPE" className='cursor-pointer'>Stripe Payment</label>
-            </div>
+            
+            {payableTotal > 0 && (
+                <>
+                    <p className='text-slate-400 text-xs my-4'>Payment Method</p>
+                    <div className='flex gap-2 items-center'>
+                        <input type="radio" id="COD" onChange={() => setPaymentMethod('COD')} checked={paymentMethod === 'COD'} className='accent-gray-500' />
+                        <label htmlFor="COD" className='cursor-pointer'>COD</label>
+                    </div>
+                    <div className='flex gap-2 items-center mt-1'>
+                        <input type="radio" id="STRIPE" name='payment' onChange={() => setPaymentMethod('STRIPE')} checked={paymentMethod === 'STRIPE'} className='accent-gray-500' />
+                        <label htmlFor="STRIPE" className='cursor-pointer'>Stripe Payment</label>
+                    </div>
+                </>
+            )}
+
             <div className='my-4 py-4 border-y border-slate-200 text-slate-400'>
                 <p>Address</p>
                 <div className='mt-2'>
@@ -169,28 +188,20 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
                     <div className='flex flex-col gap-1 text-slate-400'>
                         <p>Subtotal:</p>
                         <p>Shipping:</p>
-                        {coupon && <p>Coupon:</p>}
+                        {totalDiscount > 0 && <p>Voucher Discount:</p>}
                     </div>
                     <div className='flex flex-col gap-1 font-medium text-right'>
                         <p>{formatVND(totalPrice)}</p>
                         <p>Free</p>
-                        {coupon && <p>{`-${formatVND(coupon.discount / 100 * totalPrice)}`}</p>}
+                        {totalDiscount > 0 && <p className='text-green-600'>{`-${formatVND(totalDiscount)}`}</p>}
                     </div>
                 </div>
-                {
-                    !coupon ? (
-                        <form onSubmit={e => toast.promise(handleCouponCode(e), { loading: 'Checking Coupon...' })} className='flex justify-center gap-3 mt-3'>
-                            <input onChange={(e) => setCouponCodeInput(e.target.value)} value={couponCodeInput} type="text" placeholder='Coupon Code' className='border border-slate-400 p-1.5 rounded w-full outline-none' />
-                            <button className='bg-slate-600 text-white px-3 rounded hover:bg-slate-800 active:scale-95 transition-all'>Apply</button>
-                        </form>
-                    ) : (
-                        <div className='w-full flex items-center justify-center gap-2 text-xs mt-2'>
-                            <p>Code: <span className='font-semibold ml-1'>{coupon.code.toUpperCase()}</span></p>
-                            <p>{coupon.description}</p>
-                            <XIcon size={18} onClick={() => setCoupon('')} className='hover:text-red-700 transition cursor-pointer' />
-                        </div>
-                    )
-                }
+                <div className='mt-3'>
+                    <Button variant="outline" className="w-full" onClick={() => setIsVoucherModalOpen(true)}>
+                        <TicketIcon className="w-4 h-4 mr-2" />
+                        Select or enter Voucher
+                    </Button>
+                </div>
             </div>
             <div className='flex justify-between py-4'>
                 <p>Total:</p>
@@ -205,13 +216,15 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
                 <p className='text-xs text-orange-600 mb-2'>Please select at least one item from your cart to place an order.</p>
             )}
 
-            {paymentMethod === 'STRIPE' ? (
+            {payableTotal <= 0 ? (
+                <button disabled={!selectedAddress || items.length === 0} onClick={e => toast.promise(handlePlaceFreeOrder(e), { loading: 'Placing order...' })} className='w-full disabled:opacity-60 disabled:cursor-not-allowed bg-slate-700 text-white py-2.5 rounded hover:bg-slate-900 active:scale-95 transition-all'>Place Order</button>
+            ) : paymentMethod === 'STRIPE' ? (
                 <div className='mt-2'>
                     <StripePayment
                         amount={payableTotal}
                         addressId={selectedAddress?.id}
                         items={items.map(i => ({ productId: i.id, quantity: i.cartQuantity, price: i.price }))}
-                        coupon={coupon || null}
+                        userVoucherIds={Object.values(selectedVouchers).filter(Boolean).map(v => v.userVoucherId)}
                         onSuccess={async (paymentIntent) => {
                             try {
                                 // Create orders (may be multiple for multi-store) immediately after successful payment
@@ -235,6 +248,14 @@ const OrderSummary = ({ totalPrice, items, onOrderSuccess }) => {
             )}
 
             {showAddressModal && <AddressModal setShowAddressModal={setShowAddressModal} initialAddress={editingAddress} onSaved={(addr) => dispatch(setSelectedAddress(addr))} />}
+            
+            <VoucherSelectionModal 
+                open={isVoucherModalOpen}
+                onOpenChange={setIsVoucherModalOpen}
+                cartItems={cartItems}
+                initialSelectedVouchers={selectedVouchers}
+                onApply={setSelectedVouchers}
+            />
 
         </div>
     )

@@ -8,7 +8,25 @@ hide circle
 ' avoid problems with angled crows feet
 skinparam linetype ortho
 
-title Lược đồ Quan hệ Thực thể (ERD) - ShopMe
+title Lược đồ Quan hệ Thực thể (ERD) - ShopMe (Voucher System Update)
+
+' --- Enums Definition ---
+enum "VoucherType" {
+  SHOP
+  PLATFORM
+  SHIPPING
+}
+
+enum "DiscountType" {
+  FIXED_AMOUNT
+  PERCENTAGE
+}
+
+enum "UserVoucherStatus" {
+  AVAILABLE
+  USED
+  EXPIRED
+}
 
 ' --- Entities Definition ---
 
@@ -18,6 +36,7 @@ entity "User" {
   name : String
   email : String <<unique>>
   role : Role
+  isActive: Boolean
   ' ... other fields
 }
 
@@ -36,6 +55,7 @@ entity "Product" {
   --
   name : String
   price : Float
+  quantity : Int
   *<u>storeId</u>* : String <<FK>>
   *<u>categoryId</u>* : String <<FK>>
   *<u>brandId</u>* : String <<FK>>
@@ -54,12 +74,14 @@ entity "Brand" {
   --
   name : String <<unique>>
   slug : String <<unique>>
+  logo: String
 }
 
 entity "Order" {
   * **id** : String <<PK>>
   --
   total : Float
+  totalDiscountAmount: Float
   status : OrderStatus
   *<u>userId</u>* : String <<FK>>
   *<u>storeId</u>* : String <<FK>>
@@ -93,12 +115,30 @@ entity "Rating" {
   *<u>productId</u>* : String <<FK>>
 }
 
-entity "Coupon" {
-  * **code** : String <<PK>>
+' --- New Voucher Entities ---
+entity "VoucherCampaign" {
+  * **id** : String <<PK>>
   --
-  discount : Float
-  expiresAt : DateTime
+  voucher_code : String <<unique>>
+  voucher_type : VoucherType
+  discount_type : DiscountType
+  discount_value : Float
+  max_discount_amount : Float
+  min_order_value : Float
+  start_date : DateTime
+  end_date : DateTime
+  *<u>created_by_shop_id</u>* : String <<FK>>
 }
+
+entity "UserVoucher" {
+  * **id** : String <<PK>>
+  --
+  status : UserVoucherStatus
+  *<u>user_id</u>* : String <<FK>>
+  *<u>voucher_campaign_id</u>* : String <<FK>>
+  *<u>used_in_order_id</u>* : String <<FK>>
+}
+
 
 ' --- Auth-related Entities ---
 package "NextAuth" {
@@ -109,16 +149,6 @@ package "NextAuth" {
     type : String
     provider : String
   }
-  entity "Session" {
-    * **id** : String <<PK>>
-    --
-    *<u>userId</u>* : String <<FK>>
-    sessionToken : String <<unique>>
-  }
-  entity "VerificationToken" {
-    * **<u>identifier</u>** : String <<PK>>
-    * **<u>token</u>** : String <<PK, unique>>
-  }
 }
 
 
@@ -126,22 +156,28 @@ package "NextAuth" {
 
 User                               ||--o|  Store                 : "owns"
 User                               ||--o{ Account               : "has"
-User                               ||--o{ Session               : "has"
 User                               ||--o{ Address               : "has"
 User                               ||--o{ Order                 : "places"
 User                               ||--o{ Rating                : "gives"
+User                               ||--o{ UserVoucher           : "collects"
 
 Store                              ||--o{ Product               : "sells"
 Store                              ||--o{ Order                 : "receives"
+Store                              }o--|| VoucherCampaign       : "creates"
 
 Category                           }o--|| Product               : "categorizes"
+Category                           }o--o{ VoucherCampaign       : "can apply to"
 Brand                              }o--|| Product               : "is of"
 
 Order                              ||--o{ OrderItem             : "contains"
+Order                              }o--o{ UserVoucher           : "uses"
 Address                            }o--|| Order                 : "ships to"
 
 Product                            ||--o{ OrderItem             : "is in"
 Product                            ||--o{ Rating                : "has"
+Product                            }o--o{ VoucherCampaign       : "can apply to"
+
+VoucherCampaign                    ||--o{ UserVoucher           : "is instance of"
 
 @enduml
 ```

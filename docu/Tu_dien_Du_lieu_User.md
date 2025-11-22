@@ -16,3 +16,6 @@
 | 12 | `dateOfBirth` | Nullable | `timestamp(3)` | Ngày sinh của người dùng. |
 | 13 | `createdAt` | Not Null, Default: `now()` | `timestamp(3)` | Ngày tạo tài khoản. |
 | 14 | `updatedAt` | Not Null, Auto-updated | `timestamp(3)` | Ngày cập nhật tài khoản lần cuối. |
+
+**Quan hệ:**
+- `User` 1-N `UserVoucher` (Một người dùng có thể có nhiều voucher trong ví)

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import prisma from "@/lib/prisma"
+import { calculateAndValidateVoucherDiscount } from "@/lib/vouchers"
 
 export async function GET() {
   try {
@@ -42,7 +43,7 @@ export async function POST(request) {
     }
 
     const body = await request.json()
-    const { items, addressId, total, paymentMethod, isPaid = false, coupon = null, paymentIntentId = null } = body || {}
+    const { items, addressId, total, paymentMethod, isPaid = false, userVoucherIds = [], paymentIntentId = null } = body || {}
 
     if (!Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: "No items" }), { status: 400 })
@@ -50,58 +51,28 @@ export async function POST(request) {
     if (!addressId) {
       return new Response(JSON.stringify({ error: "Missing addressId" }), { status: 400 })
     }
-    if (!total || total <= 0) {
+    if (!total || total < 0) { // total can be 0 for free items with vouchers
       return new Response(JSON.stringify({ error: "Invalid total" }), { status: 400 })
     }
     if (!paymentMethod || !["COD", "STRIPE"].includes(paymentMethod)) {
       return new Response(JSON.stringify({ error: "Invalid payment method" }), { status: 400 })
     }
 
-    // Fetch all products
+    // --- Server-side validation and calculation ---
     const productIds = items.map(i => i.productId)
     const products = await prisma.product.findMany({ 
       where: { id: { in: productIds } }, 
-      select: { id: true, name: true, storeId: true, quantity: true, isActive: true } 
+      select: { id: true, name: true, storeId: true, quantity: true, isActive: true, price: true } 
     })
 
     if (products.length !== items.length) {
       return new Response(JSON.stringify({ error: "Some products not found" }), { status: 400 })
     }
 
-    // Group items by store
     const productMap = new Map(products.map(p => [p.id, p]))
     const storeGroups = new Map()
+    let grandSubtotal = 0;
     
-    for (const item of items) {
-      const product = productMap.get(item.productId)
-      if (!product) continue
-      
-      const storeId = product.storeId
-      if (!storeGroups.has(storeId)) {
-        storeGroups.set(storeId, [])
-      }
-      storeGroups.get(storeId).push({ ...item, product })
-    }
-
-    // Fetch stores for validation
-    const storeIds = [...new Set(products.map(p => p.storeId))]
-    const stores = await prisma.store.findMany({
-      where: { id: { in: storeIds } },
-      select: { id: true, name: true, isActive: true }
-    })
-
-    // Check if any store is inactive
-    const storeMap = new Map(stores.map(s => [s.id, s]))
-    for (const [storeId, storeItems] of storeGroups) {
-      const store = storeMap.get(storeId)
-      if (!store || !store.isActive) {
-        return new Response(JSON.stringify({ 
-          error: `The store "${store?.name || 'Unknown'}" is temporarily closed and not accepting orders` 
-        }), { status: 400 })
-      }
-    }
-
-    // Check stock availability and product active status (all-or-nothing)
     for (const item of items) {
       const product = productMap.get(item.productId)
       if (!product) {
@@ -115,31 +86,63 @@ export async function POST(request) {
           error: `Insufficient stock for "${product.name}". Available: ${product.quantity}, Requested: ${item.quantity}` 
         }), { status: 400 })
       }
+      
+      const storeId = product.storeId
+      if (!storeGroups.has(storeId)) {
+        storeGroups.set(storeId, { items: [], subtotal: 0 })
+      }
+      const storeGroup = storeGroups.get(storeId)
+      const lineTotal = product.price * item.quantity
+      storeGroup.items.push({ ...item, product })
+      storeGroup.subtotal += lineTotal
+      grandSubtotal += lineTotal
     }
 
-    // Check for duplicate order with same paymentIntentId (Stripe idempotency)
+    const storeIds = Array.from(storeGroups.keys())
+    const stores = await prisma.store.findMany({
+      where: { id: { in: storeIds } },
+      select: { id: true, name: true, isActive: true }
+    })
+
+    const inactiveStore = stores.find(s => !s.isActive)
+    if (inactiveStore) {
+      return new Response(JSON.stringify({ 
+        error: `The store "${inactiveStore.name}" is temporarily closed and not accepting orders` 
+      }), { status: 400 })
+    }
+
+    // --- Voucher Validation ---
+    const { totalDiscount, validationResults } = await calculateAndValidateVoucherDiscount({
+        userVoucherIds,
+        cartItems: items,
+        userId: session.user.id,
+    });
+
+    const serverSidePayableTotal = Math.round(grandSubtotal - totalDiscount);
+
+    // CRITICAL: Security check
+    if (serverSidePayableTotal !== Math.round(total)) {
+        return new Response(JSON.stringify({ error: 'Price mismatch. Please refresh and try again.' }), { status: 400 });
+    }
+
+    // --- Idempotency Check ---
     if (paymentIntentId) {
       const existingOrders = await prisma.order.findMany({ 
         where: { paymentIntentId },
         include: {
           address: true,
-          store: {
-            select: { id: true, name: true, logo: true, username: true }
-          },
-          orderItems: {
-            include: { product: { select: { id: true, name: true, images: true, storeId: true } } }
-          }
+          store: { select: { id: true, name: true, logo: true, username: true } },
+          orderItems: { include: { product: { select: { id: true, name: true, images: true, storeId: true } } } }
         }
       })
       if (existingOrders.length > 0) {
-        // Orders already exist, return them instead of creating duplicates
         return new Response(JSON.stringify(existingOrders), { status: 200 })
       }
     }
 
-    // Use transaction to deduct quantities and create orders atomically (one per store)
+    // --- Transaction ---
     const createdOrders = await prisma.$transaction(async (tx) => {
-      // Deduct quantities from each product
+      // 1. Deduct quantities
       for (const item of items) {
         await tx.product.update({
           where: { id: item.productId },
@@ -147,52 +150,72 @@ export async function POST(request) {
         })
       }
 
-      // Create one order per store
-      const orders = []
-      for (const [storeId, storeItems] of storeGroups) {
-        // Calculate total for this store
-        const storeTotal = storeItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-        
-        // Determine if coupon applies to this store (coupon applies to specific store only)
-        let storeCoupon = {}
-        let storeIsCouponUsed = false
-        if (coupon && coupon.storeId === storeId) {
-          storeCoupon = coupon
-          storeIsCouponUsed = true
+      // 2. Separate voucher discounts by type
+      const shopVoucherDiscounts = new Map();
+      let platformDiscount = 0;
+      let shippingDiscount = 0;
+
+      validationResults.forEach(result => {
+        const { campaign, discountAmount } = result;
+        if (campaign.voucher_type === 'SHOP') {
+            shopVoucherDiscounts.set(campaign.created_by_shop_id, discountAmount);
+        } else if (campaign.voucher_type === 'PLATFORM') {
+            platformDiscount += discountAmount;
+        } else if (campaign.voucher_type === 'SHIPPING') {
+            shippingDiscount += discountAmount;
         }
-        
-        // Create the order for this store
+      });
+
+      // 3. Create one order per store
+      const orders = []
+      for (const [storeId, group] of storeGroups) {
+        // Distribute discounts
+        let storeDiscountAmount = 0;
+        // Apply shop-specific voucher discount
+        if (shopVoucherDiscounts.has(storeId)) {
+            storeDiscountAmount += shopVoucherDiscounts.get(storeId);
+        }
+        // Apply proportional platform & shipping discounts
+        const storeProportion = grandSubtotal > 0 ? group.subtotal / grandSubtotal : 0;
+        storeDiscountAmount += (platformDiscount + shippingDiscount) * storeProportion;
+
         const order = await tx.order.create({
           data: {
-            total: storeTotal,
+            total: group.subtotal,
+            totalDiscountAmount: Math.round(storeDiscountAmount),
             userId: session.user.id,
             storeId,
             addressId,
             isPaid: !!isPaid,
             paymentMethod,
             paymentIntentId: paymentIntentId || undefined,
-            isCouponUsed: storeIsCouponUsed,
-            coupon: storeCoupon,
             orderItems: {
-              create: storeItems.map(i => ({ 
+              create: group.items.map(i => ({ 
                 productId: i.productId, 
                 quantity: i.quantity, 
-                price: i.price 
+                price: i.product.price 
               }))
             }
           },
           include: {
             address: true,
-            store: {
-              select: { id: true, name: true, logo: true, username: true }
-            },
-            orderItems: {
-              include: { product: { select: { id: true, name: true, images: true, storeId: true } } }
-            }
+            store: { select: { id: true, name: true, logo: true, username: true } },
+            orderItems: { include: { product: { select: { id: true, name: true, images: true, storeId: true } } } }
           }
         })
-        
         orders.push(order)
+      }
+
+      // 4. Update voucher status and link to the FIRST order
+      if (userVoucherIds.length > 0 && orders.length > 0) {
+          await tx.userVoucher.updateMany({
+              where: { id: { in: userVoucherIds }, user_id: session.user.id },
+              data: {
+                  status: 'USED',
+                  used_in_order_id: orders[0].id, // Link all to the first order
+                  used_date: new Date()
+              }
+          });
       }
 
       return orders
@@ -201,7 +224,7 @@ export async function POST(request) {
     return new Response(JSON.stringify(createdOrders), { status: 201 })
   } catch (err) {
     console.error("POST /api/orders error", err)
-    return new Response(JSON.stringify({ error: "Failed to create order" }), { status: 500 })
+    return new Response(JSON.stringify({ error: err.message || "Failed to create order" }), { status: 500 })
   }
 }
 

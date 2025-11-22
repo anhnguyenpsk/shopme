@@ -9,6 +9,9 @@
 | 5 | `createdAt` | Not Null, Default: `now()` | `timestamp(3)` | Ngày tạo danh mục. |
 | 6 | `updatedAt` | Not Null, Auto-updated | `timestamp(3)` | Ngày cập nhật danh mục lần cuối. |
 
+**Quan hệ:**
+- `Category` N-M `VoucherCampaign` (Một danh mục có thể thuộc về nhiều chiến dịch voucher, và một chiến dịch có thể áp dụng cho nhiều danh mục)
+
 ---
 
 ### Từ điển Dữ liệu (Data Dictionary) - Bảng `Brand`

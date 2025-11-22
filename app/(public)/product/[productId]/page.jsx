@@ -4,6 +4,7 @@ import ProductDetails from "@/components/ProductDetails";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import PublicVoucherList from "@/components/vouchers/PublicVoucherList";
 
 export default function Product() {
 
@@ -47,6 +48,9 @@ export default function Product() {
                 <div className="  text-gray-600 text-sm mt-8 mb-5">
                     Home / Products / {product?.category}
                 </div>
+
+                {/* Vouchers */}
+                {product && <PublicVoucherList productId={product.id} storeId={product.storeId} />}
 
                 {/* Product Details */}
                 {product && (<ProductDetails product={product} />)}

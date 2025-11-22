@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -30,11 +29,12 @@ model User {
   dateOfBirth    DateTime?
 
   // Relations
-  ratings     Rating[]
-  Address     Address[]
-  store       Store?
-  buyerOrders Order[]   @relation("BuyerRelation")
-  accounts    Account[]
+  ratings      Rating[]
+  Address      Address[]
+  store        Store?
+  buyerOrders  Order[]       @relation("BuyerRelation")
+  accounts     Account[]
+  userVouchers UserVoucher[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -60,11 +60,12 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  categoryRef Category?   @relation(fields: [categoryId], references: [id])
-  brandRef    Brand?      @relation(fields: [brandId], references: [id])
-  orderItems  OrderItem[]
-  rating      Rating[]
+  store            Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  categoryRef      Category?         @relation(fields: [categoryId], references: [id])
+  brandRef         Brand?            @relation(fields: [brandId], references: [id])
+  orderItems       OrderItem[]
+  rating           Rating[]
+  voucherCampaigns VoucherCampaign[]
 }
 
 enum OrderStatus {
@@ -79,23 +80,40 @@ enum PaymentMethod {
   STRIPE
 }
 
-// Required for creating an Order: total, userId, storeId, addressId, isPaid, paymentMethod, isCouponUsed, coupon (JSON), orderItems (nested)
+enum VoucherType {
+  SHOP
+  PLATFORM
+  SHIPPING
+}
+
+enum DiscountType {
+  FIXED_AMOUNT
+  PERCENTAGE
+}
+
+enum UserVoucherStatus {
+  AVAILABLE
+  USED
+  EXPIRED
+}
+
+// Required for creating an Order: total, userId, storeId, addressId, isPaid, paymentMethod, orderItems (nested)
 
 model Order {
-  id            String        @id @default(cuid())
-  paymentIntentId String?       @unique
-  total         Float
-  status        OrderStatus   @default(ORDER_PLACED)
-  userId        String
-  storeId       String
-  addressId     String
-  isPaid        Boolean       @default(false)
-  paymentMethod PaymentMethod
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  isCouponUsed  Boolean       @default(false)
-  coupon        Json          @default("{}")
-  orderItems    OrderItem[]
+  id                  String        @id @default(cuid())
+  paymentIntentId     String?       @unique
+  total               Float
+  status              OrderStatus   @default(ORDER_PLACED)
+  userId              String
+  storeId             String
+  addressId           String
+  isPaid              Boolean       @default(false)
+  paymentMethod       PaymentMethod
+  totalDiscountAmount Float         @default(0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  orderItems          OrderItem[]
+  userVouchers        UserVoucher[]
 
   // Relations
   user    User    @relation("BuyerRelation", fields: [userId], references: [id])
@@ -155,29 +173,17 @@ model Address {
   user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Required for creating a Coupon: code, description, discount, forNewUser, isPublic, expiresAt
-
-model Coupon {
-  code        String   @id
-  description String
-  discount    Float
-  forNewUser  Boolean
-  forMember   Boolean  @default(false)
-  isPublic    Boolean
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-}
-
 // Category and Brand models for product taxonomy
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  products  Product[]
+  id               String            @id @default(cuid())
+  name             String            @unique
+  slug             String            @unique
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  products         Product[]
+  voucherCampaigns VoucherCampaign[]
 }
 
 model Brand {
@@ -190,6 +196,47 @@ model Brand {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
+}
+
+model VoucherCampaign {
+  id                  String       @id @default(cuid())
+  name                String
+  description         String?
+  voucher_code        String?      @unique
+  voucher_type        VoucherType
+  discount_type       DiscountType
+  discount_value      Float
+  max_discount_amount Float?
+  min_order_value     Float        @default(0)
+  start_date          DateTime
+  end_date            DateTime
+  total_usage_limit   Int
+  user_usage_limit    Int          @default(1)
+  status              String       @default("ACTIVE")
+  created_by_shop_id  String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  store                Store?        @relation(fields: [created_by_shop_id], references: [id])
+  userVouchers         UserVoucher[]
+  applicableProducts   Product[]
+  applicableCategories Category[]
+}
+
+model UserVoucher {
+  id                  String            @id @default(cuid())
+  status              UserVoucherStatus @default(AVAILABLE)
+  collected_date      DateTime          @default(now())
+  used_date           DateTime?
+  user_id             String
+  voucher_campaign_id String
+  used_in_order_id    String?
+
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  voucherCampaign VoucherCampaign @relation(fields: [voucher_campaign_id], references: [id], onDelete: Cascade)
+  order           Order?          @relation(fields: [used_in_order_id], references: [id], onDelete: SetNull)
+
+  @@unique([user_id, voucher_campaign_id, used_in_order_id])
 }
 
 // Required for creating a Store: userId, name, username, email, contact, logo, description, address (optional: , status, isActive)
@@ -209,29 +256,27 @@ model Store {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  Product Product[]
-  Order   Order[]
-  user    User      @relation(fields: [userId], references: [id])
+  Product          Product[]
+  Order            Order[]
+  user             User              @relation(fields: [userId], references: [id])
+  voucherCampaigns VoucherCampaign[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
-
-
-
