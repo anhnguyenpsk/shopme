@@ -1,9 +1,9 @@
 'use client'
 // import Banner from "@/components/Banner";
-import TopBar from "@/components/TopBar";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import EmailVerificationBanner from "@/components/EmailVerificationBanner";
+import TopBar from "@/components/layout/TopBar";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import EmailVerificationBanner from "@/components/layout/EmailVerificationBanner";
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { fetchProducts } from '@/lib/features/product/productSlice'

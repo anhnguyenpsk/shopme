@@ -1,6 +1,8 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import prisma from "@/lib/prisma"
+
+export const dynamic = 'force-dynamic';
 
 export async function PATCH(request, { params }) {
   try {

@@ -2,7 +2,7 @@
 import Image from "next/image"
 import { MapPin, Mail, Phone } from "lucide-react"
 
-const StoreInfo = ({store}) => {
+const StoreInfo = ({ store }) => {
     return (
         <div className="flex-1 space-y-2 text-sm">
             {store.logo ? (
@@ -23,11 +23,11 @@ const StoreInfo = ({store}) => {
                     className={`text-xs font-semibold px-4 py-1 rounded-full ${store.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : store.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-green-100 text-green-800'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-green-100 text-green-800'
                         }`}
                 >
-                    {store.status}
+                    {store.status === 'pending' ? 'Đang chờ' : store.status === 'rejected' ? 'Đã từ chối' : 'Đã duyệt'}
                 </span>
             </div>
 
@@ -35,7 +35,7 @@ const StoreInfo = ({store}) => {
             <p className="flex items-center gap-2"> <MapPin size={16} /> {store.address}</p>
             <p className="flex items-center gap-2"><Phone size={16} /> {store.contact}</p>
             <p className="flex items-center gap-2"><Mail size={16} />  {store.email}</p>
-            <p className="text-slate-700 mt-5">Applied  on <span className="text-xs">{new Date(store.createdAt).toLocaleDateString()}</span> by</p>
+            <p className="text-slate-700 mt-5">Đăng ký ngày <span className="text-xs">{new Date(store.createdAt).toLocaleDateString('vi-VN')}</span> bởi</p>
             <div className="flex items-center gap-2 text-sm ">
                 {store.user?.image ? (
                     <Image width={36} height={36} src={store.user.image} alt={store.user.name} className="w-9 h-9 rounded-full object-cover" />

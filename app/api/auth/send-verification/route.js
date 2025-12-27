@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { generateVerificationCode, createVerificationToken } from '@/lib/verification';
 import { sendVerificationEmail } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     const body = await request.json();

@@ -1,13 +1,13 @@
 'use client'
 import { Suspense, useEffect, useState } from "react"
-import ProductCard from "@/components/ProductCard"
+import ProductCard from "@/components/products/ProductCard"
 import { MoveLeftIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSelector } from "react-redux"
 import axios from "axios"
-import StoreCard from "@/components/StoreCard"
+import StoreCard from "@/components/shared/StoreCard"
 
- function ShopContent() {
+function ShopContent() {
 
     // get query params ?search=abc&category=xyz
     const searchParams = useSearchParams()
@@ -28,10 +28,10 @@ import StoreCard from "@/components/StoreCard"
             const params = new URLSearchParams()
             if (category) params.append('category', category)
             if (search) params.append('q', search)
-            
+
             const { data } = await axios.get(`/api/products/search?${params.toString()}`)
             setFilteredProducts(data)
-            
+
             // Extract category name from the first product if available
             if (data.length > 0 && data[0].categoryRef) {
                 setCategoryName(data[0].categoryRef.name)
@@ -78,9 +78,9 @@ import StoreCard from "@/components/StoreCard"
                     <>
                         {/* Featured Stores Section */}
                         <div className="mb-12">
-                            <h2 className="text-2xl text-slate-500 my-6">Featured <span className="text-slate-700 font-medium">Stores</span></h2>
+                            <h2 className="text-2xl text-slate-500 my-6">Cửa hàng <span className="text-slate-700 font-medium">Nổi bật</span></h2>
                             {loadingStores ? (
-                                <div className="text-slate-500">Loading stores...</div>
+                                <div className="text-slate-500">Đang tải cửa hàng...</div>
                             ) : stores.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
                                     {stores.slice(0, 3).map((store) => (
@@ -88,7 +88,7 @@ import StoreCard from "@/components/StoreCard"
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-slate-500">No stores available yet.</div>
+                                <div className="text-slate-500">Chưa có cửa hàng nào.</div>
                             )}
                         </div>
                     </>
@@ -96,25 +96,25 @@ import StoreCard from "@/components/StoreCard"
 
                 {/* Products Section */}
                 <h1 onClick={() => router.push('/shop')} className="text-2xl text-slate-500 my-6 flex items-center gap-2 cursor-pointer">
-                    {(search || category) && <MoveLeftIcon size={20} />}  
+                    {(search || category) && <MoveLeftIcon size={20} />}
                     {categoryName ? (
                         <>
-                            <span className="text-slate-700 font-medium">{categoryName}</span> Products
+                            <span className="text-slate-700 font-medium">{categoryName}</span>
                         </>
                     ) : (
-                        <>All <span className="text-slate-700 font-medium">Products</span></>
+                        <>Tất cả <span className="text-slate-700 font-medium">Sản phẩm</span></>
                     )}
                 </h1>
 
                 {loadingProducts ? (
-                    <div className="text-slate-500 py-12 text-center">Loading products...</div>
+                    <div className="text-slate-500 py-12 text-center">Đang tải sản phẩm...</div>
                 ) : displayProducts.length > 0 ? (
                     <div className="grid grid-cols-2 sm:flex flex-wrap gap-6 xl:gap-12 mx-auto mb-32">
                         {displayProducts.map((product) => <ProductCard key={product.id} product={product} />)}
                     </div>
                 ) : (
                     <div className="text-slate-500 py-12 text-center">
-                        {(category || search) ? 'No products found matching your criteria.' : 'No products available yet.'}
+                        {(category || search) ? 'Không tìm thấy sản phẩm nào phù hợp.' : 'Chưa có sản phẩm nào.'}
                     </div>
                 )}
             </div>
@@ -124,9 +124,9 @@ import StoreCard from "@/components/StoreCard"
 
 
 export default function Shop() {
-  return (
-    <Suspense fallback={<div>Loading shop...</div>}>
-      <ShopContent />
-    </Suspense>
-  );
+    return (
+        <Suspense fallback={<div>Đang tải cửa hàng...</div>}>
+            <ShopContent />
+        </Suspense>
+    );
 }

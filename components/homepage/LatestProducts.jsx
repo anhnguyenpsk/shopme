@@ -21,7 +21,7 @@ const LatestProducts = () => {
       const response = await fetch('/api/products/latest');
       if (response.ok) {
         const data = await response.json();
-        setLatestProducts(data.slice(0, 4)); // Get top 4 latest products
+        setLatestProducts(data.slice(0, 12)); // Get top 12 latest products
       }
     } catch (error) {
       console.error('Error fetching latest products:', error);
@@ -80,18 +80,18 @@ const LatestProducts = () => {
           <div>
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-800 text-sm font-medium mb-4">
               <Zap className="w-4 h-4 mr-2" />
-              Freshly Added
+              Mới cập nhật
             </div>
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
-              Latest Products
+              Sản phẩm mới nhất
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl">
-              Check out the newest additions to our marketplace.
+              Khám phá những sản phẩm mới nhất vừa lên kệ của chúng tôi.
             </p>
           </div>
           <Button asChild variant="outline" className="mt-4 md:mt-0">
             <Link href="/shop">
-              View All
+              Xem tất cả
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -99,7 +99,7 @@ const LatestProducts = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {loading ? (
-            Array.from({ length: 4 }).map((_, index) => (
+            Array.from({ length: 12 }).map((_, index) => (
               <LoadingSkeleton key={index} />
             ))
           ) : (

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch a single product for editing
 export async function GET(request, { params }) {
@@ -51,7 +53,7 @@ export async function PATCH(request, { params }) {
     try {
         const { productId } = await params;
         const body = await request.json();
-        const { name, description, price, quantity, categoryId, brandId, images } = body;
+        const { name, description, price, quantity, categoryId, brandId, images, hasVariations, variationGroups, variants } = body;
 
         const store = await prisma.store.findUnique({
             where: { userId: session.user.id },
@@ -83,6 +85,39 @@ export async function PATCH(request, { params }) {
                 categoryId,
                 brandId: brandId || null,
                 images,
+                hasVariations,
+                variationGroups,
+                variants: {
+                    deleteMany: {
+                        id: {
+                            notIn: variants?.filter(v => v.id).map(v => v.id) || []
+                        }
+                    },
+                    upsert: variants?.filter(v => v.id).map(v => ({
+                        where: { id: v.id },
+                        update: {
+                            price: Number(v.price),
+                            quantity: Number(v.quantity),
+                            sku: v.sku,
+                            attributes: v.attributes,
+                            images: v.images || []
+                        },
+                        create: {
+                            price: Number(v.price),
+                            quantity: Number(v.quantity),
+                            sku: v.sku,
+                            attributes: v.attributes,
+                            images: v.images || []
+                        }
+                    })) || [],
+                    create: variants?.filter(v => !v.id).map(v => ({
+                        price: Number(v.price),
+                        quantity: Number(v.quantity),
+                        sku: v.sku,
+                        attributes: v.attributes,
+                        images: v.images || []
+                    })) || []
+                }
             },
         });
 

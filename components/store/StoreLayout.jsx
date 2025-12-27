@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import Loading from "../Loading"
 import StoreNavbar from "./StoreNavbar"
 import StoreSidebar from "./StoreSidebar"
-import EmailVerificationBanner from "../EmailVerificationBanner"
+import Loading from "@/components/shared/Loading"
+import EmailVerificationBanner from "@/components/layout/EmailVerificationBanner"
 
 const StoreLayout = ({ children }) => {
     const { data: session, status } = useSession()

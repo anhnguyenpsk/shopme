@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
+
+export const dynamic = 'force-dynamic';
 
 // Helper to generate slug from name
 function generateSlug(name) {
@@ -21,7 +23,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { brandId } = params;
+    const { brandId } = await params;
 
     const brand = await prisma.brand.findUnique({
       where: { id: brandId },
@@ -51,7 +53,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { brandId } = params;
+    const { brandId } = await params;
     const body = await request.json();
     const { name, slug: customSlug, isActive, logo, description } = body;
 
@@ -69,10 +71,10 @@ export async function PUT(request, { params }) {
 
     if (name !== undefined && name.trim().length > 0) {
       updateData.name = name.trim();
-      
+
       // Generate new slug if name changed
       const newSlug = customSlug || generateSlug(name);
-      
+
       // Check if new name or slug conflicts with another brand
       if (name !== existingBrand.name || newSlug !== existingBrand.slug) {
         const conflictingBrand = await prisma.brand.findFirst({
@@ -140,7 +142,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { brandId } = params;
+    const { brandId } = await params;
 
     // Check if brand exists
     const brand = await prisma.brand.findUnique({
@@ -159,8 +161,8 @@ export async function DELETE(request, { params }) {
     // Check if brand has products
     if (brand._count.products > 0) {
       return NextResponse.json(
-        { 
-          error: `Cannot delete brand. ${brand._count.products} product(s) are using this brand. Please reassign or delete those products first.` 
+        {
+          error: `Cannot delete brand. ${brand._count.products} product(s) are using this brand. Please reassign or delete those products first.`
         },
         { status: 400 }
       );

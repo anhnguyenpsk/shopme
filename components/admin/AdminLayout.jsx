@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useState } from "react"
-import Loading from "../Loading"
 import Link from "next/link"
 import { ArrowRightIcon } from "lucide-react"
 import AdminNavbar from "./AdminNavbar"
 import AdminSidebar from "./AdminSidebar"
-import EmailVerificationBanner from "../EmailVerificationBanner"
+import Loading from "@/components/shared/Loading";
+import EmailVerificationBanner from "@/components/layout/EmailVerificationBanner";
 
 const AdminLayout = ({ children }) => {
 

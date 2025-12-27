@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch all orders from all stores with pagination and filters
 export async function GET(request) {
@@ -23,7 +25,7 @@ export async function GET(request) {
 
     // Build where clause
     const whereClause = {};
-    
+
     if (status && ['ORDER_PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(status)) {
       whereClause.status = status;
     }

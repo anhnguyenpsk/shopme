@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
+
+export const dynamic = 'force-dynamic';
 
 // Helper to generate slug from name
 function generateSlug(name) {
@@ -21,13 +23,16 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { categoryId } = params;
+    const { categoryId } = await params;
 
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
       include: {
         _count: {
           select: { products: true },
+        },
+        parent: {
+          select: { id: true, name: true },
         },
       },
     });
@@ -51,7 +56,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { categoryId } = params;
+    const { categoryId } = await params;
     const body = await request.json();
     const { name, slug: customSlug, isActive } = body;
 
@@ -69,10 +74,10 @@ export async function PUT(request, { params }) {
 
     if (name !== undefined && name.trim().length > 0) {
       updateData.name = name.trim();
-      
+
       // Generate new slug if name changed
       const newSlug = customSlug || generateSlug(name);
-      
+
       // Check if new name or slug conflicts with another category
       if (name !== existingCategory.name || newSlug !== existingCategory.slug) {
         const conflictingCategory = await prisma.category.findFirst({
@@ -106,6 +111,41 @@ export async function PUT(request, { params }) {
       updateData.isActive = isActive;
     }
 
+    if (body.parentId !== undefined) {
+      if (body.parentId === categoryId) {
+        return NextResponse.json({ error: 'Category cannot be its own parent' }, { status: 400 });
+      }
+
+      if (body.parentId) {
+        // Check if parent exists
+        const parentCategory = await prisma.category.findUnique({
+          where: { id: body.parentId },
+        });
+
+        if (!parentCategory) {
+          return NextResponse.json({ error: 'Parent category not found' }, { status: 404 });
+        }
+
+        // Cycle detection: Check if the category being updated is an ancestor of the new parent
+        // A simple way is to traverse up from the new parent
+        let currentParentId = parentCategory.parentId;
+        while (currentParentId) {
+          if (currentParentId === categoryId) {
+            return NextResponse.json({ error: 'Circular dependency detected' }, { status: 400 });
+          }
+          const ancestor = await prisma.category.findUnique({
+            where: { id: currentParentId },
+            select: { parentId: true },
+          });
+          currentParentId = ancestor ? ancestor.parentId : null;
+        }
+
+        updateData.parentId = body.parentId;
+      } else {
+        updateData.parentId = null;
+      }
+    }
+
     // Update category
     const category = await prisma.category.update({
       where: { id: categoryId },
@@ -132,7 +172,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { categoryId } = params;
+    const { categoryId } = await params;
 
     // Check if category exists
     const category = await prisma.category.findUnique({
@@ -151,8 +191,8 @@ export async function DELETE(request, { params }) {
     // Check if category has products
     if (category._count.products > 0) {
       return NextResponse.json(
-        { 
-          error: `Cannot delete category. ${category._count.products} product(s) are using this category. Please reassign or delete those products first.` 
+        {
+          error: `Cannot delete category. ${category._count.products} product(s) are using this category. Please reassign or delete those products first.`
         },
         { status: 400 }
       );

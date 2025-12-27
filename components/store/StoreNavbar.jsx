@@ -25,7 +25,7 @@ const StoreNavbar = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [open]);
 
-    const displayName = session?.user?.name || "Seller";
+    const displayName = session?.user?.name || "Người bán";
 
     const handleLogout = async () => {
         setOpen(false);
@@ -67,7 +67,7 @@ const StoreNavbar = () => {
                             aria-haspopup="menu"
                             aria-expanded={open}
                         >
-                            Hi, {displayName}
+                            Xin chào, {displayName}
                         </button>
                         {open && (
                             <div
@@ -80,7 +80,7 @@ const StoreNavbar = () => {
                                     className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                     role="menuitem"
                                 >
-                                    My Account
+                                    Tài khoản của tôi
                                 </Link>
                                 <Link
                                     href="/orders"
@@ -88,7 +88,7 @@ const StoreNavbar = () => {
                                     className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                     role="menuitem"
                                 >
-                                    My Purchase
+                                    Đơn mua
                                 </Link>
                                 <div className="border-t border-slate-200 my-1"></div>
                                 <button
@@ -96,13 +96,13 @@ const StoreNavbar = () => {
                                     className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                     role="menuitem"
                                 >
-                                    Logout
+                                    Đăng xuất
                                 </button>
                             </div>
                         )}
                     </div>
                 ) : (
-                    <p>Hi, Seller</p>
+                    <p>Xin chào, Người bán</p>
                 )}
             </div>
         </div>

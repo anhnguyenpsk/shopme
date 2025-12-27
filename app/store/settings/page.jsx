@@ -3,7 +3,7 @@ import { assets } from "@/assets/assets"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import toast from "react-hot-toast"
-import Loading from "@/components/Loading"
+import Loading from "@/components/shared/Loading"
 import { useSession } from "next-auth/react"
 import axios from "axios"
 import { Switch } from "@/components/ui/switch"
@@ -35,7 +35,7 @@ export default function StoreSettings() {
         fd.append('file', file)
         const res = await fetch('/api/upload-store', { method: 'POST', body: fd })
         const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data?.error || 'Upload failed')
+        if (!res.ok) throw new Error(data?.error || 'Tải ảnh lên thất bại')
         return data.path // relative path
     }
 
@@ -57,7 +57,7 @@ export default function StoreSettings() {
             }
         } catch (error) {
             console.error("Error fetching store settings:", error)
-            toast.error(error?.response?.data?.error || "Failed to load store settings")
+            toast.error(error?.response?.data?.error || "Không thể tải cấu hình cửa hàng")
         }
         setLoading(false)
     }
@@ -75,7 +75,7 @@ export default function StoreSettings() {
         // Validate required fields
         if (!storeInfo.name || !storeInfo.description ||
             !storeInfo.email || !storeInfo.contact || !storeInfo.address || !storeInfo.logo) {
-            toast.error("Please fill in all required fields")
+            toast.error("Vui lòng điền đầy đủ các thông tin cần thiết")
             setSubmitting(false)
             return
         }
@@ -91,8 +91,8 @@ export default function StoreSettings() {
                 isActive: storeInfo.isActive
             })
 
-            toast.success(data.message || "Store settings updated successfully")
-            
+            toast.success(data.message || "Cập nhật cài đặt cửa hàng thành công")
+
             // Refresh store data
             if (data.store) {
                 setStoreInfo(prev => ({
@@ -101,7 +101,7 @@ export default function StoreSettings() {
                 }))
             }
         } catch (error) {
-            toast.error(error?.response?.data?.error || error.message || "Failed to update settings")
+            toast.error(error?.response?.data?.error || error.message || "Lỗi khi cập nhật cài đặt")
         }
         setSubmitting(false)
     }
@@ -129,31 +129,30 @@ export default function StoreSettings() {
             <form onSubmit={onSubmitHandler} className="flex flex-col items-start gap-3 text-slate-500">
                 {/* Title */}
                 <div className="mb-6">
-                    <h1 className="text-3xl text-slate-800 font-medium">Store Settings</h1>
-                    <p className="max-w-lg mt-2">Update your store information and manage your store status.</p>
+                    <h1 className="text-3xl text-slate-800 font-medium">Cài đặt Cửa hàng</h1>
+                    <p className="max-w-lg mt-2">Cập nhật thông tin cửa hàng và quản lý trạng thái.</p>
                 </div>
 
                 {/* Store Status Card */}
                 <div className="w-full max-w-lg border border-slate-300 rounded-lg p-4 mb-4">
                     <div className="space-y-3">
                         <div>
-                            <p className="text-sm font-medium text-slate-600">Approval Status</p>
-                            <span className={`inline-block mt-1 px-3 py-1 text-sm rounded-full ${
-                                storeInfo.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            <p className="text-sm font-medium text-slate-600">Trạng thái phê duyệt</p>
+                            <span className={`inline-block mt-1 px-3 py-1 text-sm rounded-full ${storeInfo.status === 'approved' ? 'bg-green-100 text-green-800' :
                                 storeInfo.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                            }`}>
-                                {storeInfo.status?.charAt(0).toUpperCase() + storeInfo.status?.slice(1)}
+                                    'bg-red-100 text-red-800'
+                                }`}>
+                                {storeInfo.status === 'approved' ? 'Đã duyệt' : storeInfo.status === 'pending' ? 'Đang chờ' : 'Từ chối'}
                             </span>
                         </div>
 
                         <div className="flex items-center justify-between pt-3 border-t border-slate-200">
                             <div className="space-y-0.5">
                                 <Label htmlFor="store-active" className="text-sm font-medium text-slate-600">
-                                    Store Active Status
+                                    Trạng thái hoạt động
                                 </Label>
                                 <p className="text-xs text-slate-400">
-                                    {storeInfo.isActive ? 'Your store is currently active and visible to customers' : 'Your store is currently inactive'}
+                                    {storeInfo.isActive ? 'Cửa hàng đang hiển thị với khách hàng' : 'Cửa hàng đang tạm dừng hoạt động'}
                                 </p>
                             </div>
                             <Switch
@@ -166,7 +165,7 @@ export default function StoreSettings() {
                 </div>
 
                 {/* Username (Read-only) */}
-                <p className="font-medium">Username</p>
+                <p className="font-medium">Tên đăng nhập</p>
                 <input
                     name="username"
                     value={storeInfo.username}
@@ -174,68 +173,68 @@ export default function StoreSettings() {
                     disabled
                     className="border border-slate-300 bg-slate-100 w-full max-w-lg p-2 rounded cursor-not-allowed text-slate-500"
                 />
-                <p className="text-xs text-slate-400 -mt-2">Username cannot be changed</p>
+                <p className="text-xs text-slate-400 -mt-2">Không thể đổi tên đăng nhập</p>
 
                 {/* Store Logo */}
                 <label className="mt-4 cursor-pointer">
-                    <p className="font-medium mb-2">Store Logo *</p>
+                    <p className="font-medium mb-2">Logo Cửa hàng *</p>
                     {storeInfo.logo ? (
-                        <Image 
-                            src={storeInfo.logo} 
-                            className="rounded-lg mt-2 h-20 w-auto object-cover border border-slate-300" 
-                            alt="Store logo" 
-                            width={150} 
+                        <Image
+                            src={storeInfo.logo}
+                            className="rounded-lg mt-2 h-20 w-auto object-cover border border-slate-300"
+                            alt="Store logo"
+                            width={150}
                             height={100}
                             unoptimized
                         />
                     ) : (
-                        <Image 
-                            src={assets.upload_area} 
-                            className="rounded-lg mt-2 h-20 w-auto" 
-                            alt="Upload logo" 
-                            width={150} 
-                            height={100} 
+                        <Image
+                            src={assets.upload_area}
+                            className="rounded-lg mt-2 h-20 w-auto"
+                            alt="Upload logo"
+                            width={150}
+                            height={100}
                         />
                     )}
-                    <input 
-                        type="file" 
-                        accept="image/*" 
+                    <input
+                        type="file"
+                        accept="image/*"
                         onChange={async (e) => {
                             const f = e.target.files?.[0]
                             if (!f) return
                             try {
-                                toast.loading('Uploading logo...', { id: 'upload' })
+                                toast.loading('Đang tải logo...', { id: 'upload' })
                                 const path = await uploadLogo(f)
                                 setStoreInfo({ ...storeInfo, logo: path })
-                                toast.success('Logo uploaded', { id: 'upload' })
+                                toast.success('Đã tải logo lên', { id: 'upload' })
                             } catch (err) {
-                                toast.error(err.message || 'Upload failed', { id: 'upload' })
+                                toast.error(err.message || 'Tải ảnh thất bại', { id: 'upload' })
                             }
-                        }} 
-                        hidden 
+                        }}
+                        hidden
                     />
                 </label>
 
                 {/* Name */}
-                <p className="mt-4 font-medium">Name *</p>
+                <p className="mt-4 font-medium">Tên Cửa hàng *</p>
                 <input
                     name="name"
                     onChange={onChangeHandler}
                     value={storeInfo.name}
                     type="text"
-                    placeholder="Enter your store name"
+                    placeholder="Nhập tên cửa hàng"
                     className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded"
                     required
                 />
 
                 {/* Description */}
-                <p className="mt-4 font-medium">Description *</p>
+                <p className="mt-4 font-medium">Mô tả *</p>
                 <textarea
                     name="description"
                     onChange={onChangeHandler}
                     value={storeInfo.description}
                     rows={5}
-                    placeholder="Enter your store description"
+                    placeholder="Nhập mô tả cửa hàng"
                     className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded resize-none"
                     required
                 />
@@ -247,31 +246,31 @@ export default function StoreSettings() {
                     onChange={onChangeHandler}
                     value={storeInfo.email}
                     type="email"
-                    placeholder="Enter your store email"
+                    placeholder="Nhập email cửa hàng"
                     className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded"
                     required
                 />
 
                 {/* Contact */}
-                <p className="mt-4 font-medium">Contact Number *</p>
+                <p className="mt-4 font-medium">Số điện thoại *</p>
                 <input
                     name="contact"
                     onChange={onChangeHandler}
                     value={storeInfo.contact}
                     type="text"
-                    placeholder="Enter your store contact number"
+                    placeholder="Nhập số điện thoại liên hệ"
                     className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded"
                     required
                 />
 
                 {/* Address */}
-                <p className="mt-4 font-medium">Address *</p>
+                <p className="mt-4 font-medium">Địa chỉ *</p>
                 <textarea
                     name="address"
                     onChange={onChangeHandler}
                     value={storeInfo.address}
                     rows={5}
-                    placeholder="Enter your store address"
+                    placeholder="Nhập địa chỉ cửa hàng"
                     className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded resize-none"
                     required
                 />
@@ -282,7 +281,7 @@ export default function StoreSettings() {
                     className="bg-slate-800 text-white px-12 py-2 rounded mt-6 mb-20 active:scale-95 hover:bg-slate-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={submitting || !storeInfo.name || !storeInfo.description || !storeInfo.email || !storeInfo.contact || !storeInfo.address || !storeInfo.logo}
                 >
-                    {submitting ? 'Updating...' : 'Update Settings'}
+                    {submitting ? 'Đang cập nhật...' : 'Cập nhật Cài đặt'}
                 </button>
             </form>
         </div>

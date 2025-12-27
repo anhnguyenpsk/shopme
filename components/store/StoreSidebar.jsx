@@ -1,19 +1,20 @@
 'use client'
 import { usePathname } from "next/navigation"
-import { HomeIcon, LayoutListIcon, SquarePenIcon, SquarePlusIcon, SettingsIcon } from "lucide-react"
+import { HomeIcon, LayoutListIcon, SquarePenIcon, SquarePlusIcon, SettingsIcon, TicketPercentIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-const StoreSidebar = ({storeInfo}) => {
+const StoreSidebar = ({ storeInfo }) => {
 
     const pathname = usePathname()
 
     const sidebarLinks = [
-        { name: 'Dashboard', href: '/store/dashboard', icon: HomeIcon },
-        { name: 'Add Product', href: '/store/add-product', icon: SquarePlusIcon },
-        { name: 'Manage Product', href: '/store/manage-product', icon: SquarePenIcon },
-        { name: 'Orders', href: '/store/orders', icon: LayoutListIcon },
-        { name: 'Settings', href: '/store/settings', icon: SettingsIcon },
+        { name: 'Bảng điều khiển', href: '/store/dashboard', icon: HomeIcon },
+        { name: 'Thêm sản phẩm', href: '/store/add-product', icon: SquarePlusIcon },
+        { name: 'Quản lý sản phẩm', href: '/store/manage-product', icon: SquarePenIcon },
+        { name: 'Đơn hàng', href: '/store/orders', icon: LayoutListIcon },
+        { name: 'Mã giảm giá', href: '/store/vouchers', icon: TicketPercentIcon },
+        { name: 'Cài đặt', href: '/store/settings', icon: SettingsIcon },
     ]
 
     return (

@@ -1,15 +1,17 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import prisma from "@/lib/prisma";
+
+export const dynamic = 'force-dynamic';
 
 // GET: Retrieve user's cart from database
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }), 
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 401 }
       );
     }
@@ -21,20 +23,20 @@ export async function GET() {
 
     if (!user) {
       return new Response(
-        JSON.stringify({ error: "User not found" }), 
+        JSON.stringify({ error: "User not found" }),
         { status: 404 }
       );
     }
 
     // Return cart data (default to empty object if null)
     return new Response(
-      JSON.stringify({ cart: user.cart || {} }), 
+      JSON.stringify({ cart: user.cart || {} }),
       { status: 200 }
     );
   } catch (error) {
     console.error("GET /api/user/cart error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to retrieve cart" }), 
+      JSON.stringify({ error: "Failed to retrieve cart" }),
       { status: 500 }
     );
   }
@@ -44,10 +46,10 @@ export async function GET() {
 export async function PATCH(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }), 
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 401 }
       );
     }
@@ -58,7 +60,7 @@ export async function PATCH(request) {
     // Validate cart data
     if (cartItems === undefined || total === undefined) {
       return new Response(
-        JSON.stringify({ error: "Invalid cart data" }), 
+        JSON.stringify({ error: "Invalid cart data" }),
         { status: 400 }
       );
     }
@@ -76,16 +78,16 @@ export async function PATCH(request) {
     });
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: "Cart saved successfully",
-        cart: updatedUser.cart 
-      }), 
+        cart: updatedUser.cart
+      }),
       { status: 200 }
     );
   } catch (error) {
     console.error("PATCH /api/user/cart error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to save cart" }), 
+      JSON.stringify({ error: "Failed to save cart" }),
       { status: 500 }
     );
   }

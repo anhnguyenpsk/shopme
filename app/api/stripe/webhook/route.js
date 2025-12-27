@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import prisma from '@/lib/prisma'
+import { calculateAndValidateVoucherDiscount } from '@/lib/vouchers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -32,79 +33,67 @@ export async function POST(request) {
         const metadata = pi.metadata || {}
         const userId = metadata.userId || ''
         const addressId = metadata.addressId || ''
-        const total = Number(metadata.total || 0)
-
+        
         let items = []
         try { items = JSON.parse(metadata.items || '[]') } catch {}
-        let coupon = null
-        try { coupon = JSON.parse(metadata.coupon || 'null') } catch {}
+        
+        let userVoucherIds = []
+        try { userVoucherIds = JSON.parse(metadata.userVoucherIds || '[]') } catch {}
 
-        if (!userId || !addressId || !Array.isArray(items) || items.length === 0 || !total) {
-          // Missing data; acknowledge to avoid retries, but log it
-          console.warn('Webhook missing required metadata to build order', { userId, addressId, itemsLength: items?.length, total })
+        if (!userId || !addressId || !Array.isArray(items) || items.length === 0) {
+          console.warn('Webhook missing required metadata to build order', { userId, addressId, itemsLength: items?.length })
           break
         }
 
-        // Idempotency: skip if we already created an order for this PaymentIntent
+        // Idempotency: check if orders for this PaymentIntent already exist
         const existing = await prisma.order.findFirst({ where: { paymentIntentId: pi.id } })
         if (existing) break
 
-        // Validate products, derive storeId, and check stock availability
+        // --- Replicate logic from /api/orders ---
         const productIds = items.map(i => i.productId)
         const products = await prisma.product.findMany({ 
           where: { id: { in: productIds } }, 
-          select: { id: true, name: true, storeId: true, quantity: true, isActive: true } 
+          select: { id: true, name: true, storeId: true, quantity: true, isActive: true, price: true } 
         })
         
         if (products.length !== items.length) {
-          console.warn('Some products not found for webhook order creation')
+          console.error(`Webhook Error (PI: ${pi.id}): Product mismatch. DB found ${products.length}, metadata had ${items.length}.`)
           break
         }
         
-        const firstStoreId = products[0].storeId
-        const differentStore = products.some(p => p.storeId !== firstStoreId)
-        if (differentStore) {
-          console.warn('Items from different stores; refusing webhook order creation')
-          break
-        }
-
-        // Fetch store to check status
-        const store = await prisma.store.findUnique({
-          where: { id: firstStoreId },
-          select: { id: true, name: true, isActive: true }
-        })
-
-        if (store && !store.isActive) {
-          // Log warning but STILL process order (payment was already made when store was active)
-          console.warn(`Processing webhook order for inactive store: ${store.name}. Payment intent was created before deactivation.`, { paymentIntentId: pi.id })
-        }
-
-        // Check stock availability
         const productMap = new Map(products.map(p => [p.id, p]))
-        let insufficientStock = false
+        const storeGroups = new Map()
+        let grandSubtotal = 0;
+        
         for (const item of items) {
           const product = productMap.get(item.productId)
           if (!product || !product.isActive || product.quantity < item.quantity) {
-            console.warn(`Insufficient stock or inactive product for webhook order: ${product?.name || item.productId}`, {
-              available: product?.quantity,
-              requested: item.quantity,
-              isActive: product?.isActive
-            })
-            insufficientStock = true
-            break
+            console.error(`Webhook Error (PI: ${pi.id}): Product ${product?.name || item.productId} is invalid or has insufficient stock. Order not created.`)
+            // In production, this should trigger a refund.
+            return new Response('ok', { status: 200 }) // Acknowledge webhook to prevent retries
           }
+          
+          const storeId = product.storeId
+          if (!storeGroups.has(storeId)) {
+            storeGroups.set(storeId, { items: [], subtotal: 0 })
+          }
+          const storeGroup = storeGroups.get(storeId)
+          const lineTotal = product.price * item.quantity
+          storeGroup.items.push({ ...item, product })
+          storeGroup.subtotal += lineTotal
+          grandSubtotal += lineTotal
         }
 
-        if (insufficientStock) {
-          // Stock validation failed; we cannot create the order
-          // In a production system, you might want to initiate a refund here
-          console.error('Order cannot be created due to insufficient stock. Payment received but order not created.', { paymentIntentId: pi.id })
-          break
-        }
+        // --- Voucher Validation ---
+        const { totalDiscount, validationResults } = await calculateAndValidateVoucherDiscount({
+            userVoucherIds,
+            cartItems: items,
+            userId: userId,
+        });
 
-        // Use transaction to deduct quantities and create order atomically
+        // --- Transaction ---
         await prisma.$transaction(async (tx) => {
-          // Deduct quantities from each product
+          // 1. Deduct quantities
           for (const item of items) {
             await tx.product.update({
               where: { id: item.productId },
@@ -112,32 +101,72 @@ export async function POST(request) {
             })
           }
 
-          // Create the order
-          await tx.order.create({
-            data: {
-              paymentIntentId: pi.id,
-              total,
-              userId,
-              storeId: firstStoreId,
-              addressId,
-              isPaid: true,
-              paymentMethod: 'STRIPE',
-              isCouponUsed: !!coupon,
-              coupon: coupon ? coupon : {},
-              orderItems: {
-                create: items.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.price }))
-              }
+          // 2. Separate voucher discounts
+          const shopVoucherDiscounts = new Map();
+          let platformDiscount = 0;
+          let shippingDiscount = 0;
+
+          validationResults.forEach(result => {
+            const { campaign, discountAmount } = result;
+            if (campaign.voucher_type === 'SHOP') {
+                shopVoucherDiscounts.set(campaign.created_by_shop_id, discountAmount);
+            } else if (campaign.voucher_type === 'PLATFORM') {
+                platformDiscount += discountAmount;
+            } else if (campaign.voucher_type === 'SHIPPING') {
+                shippingDiscount += discountAmount;
             }
-          })
+          });
+
+          // 3. Create one order per store
+          const orders = []
+          for (const [storeId, group] of storeGroups) {
+            let storeDiscountAmount = 0;
+            if (shopVoucherDiscounts.has(storeId)) {
+                storeDiscountAmount += shopVoucherDiscounts.get(storeId);
+            }
+            const storeProportion = grandSubtotal > 0 ? group.subtotal / grandSubtotal : 0;
+            storeDiscountAmount += (platformDiscount + shippingDiscount) * storeProportion;
+
+            const order = await tx.order.create({
+              data: {
+                total: group.subtotal,
+                totalDiscountAmount: Math.round(storeDiscountAmount),
+                userId: userId,
+                storeId,
+                addressId,
+                isPaid: true,
+                paymentMethod: 'STRIPE',
+                paymentIntentId: pi.id,
+                orderItems: {
+                  create: group.items.map(i => ({ 
+                    productId: i.productId, 
+                    quantity: i.quantity, 
+                    price: i.product.price 
+                  }))
+                }
+              }
+            })
+            orders.push(order)
+          }
+
+          // 4. Update voucher status
+          if (userVoucherIds.length > 0 && orders.length > 0) {
+              await tx.userVoucher.updateMany({
+                  where: { id: { in: userVoucherIds }, user_id: userId },
+                  data: {
+                      status: 'USED',
+                      used_in_order_id: orders[0].id,
+                      used_date: new Date()
+                  }
+              });
+          }
         })
         break
       }
       case 'payment_intent.payment_failed': {
-        // Optionally log or mark something; for now, just acknowledge.
         break
       }
       default:
-        // Ignore other events
         break
     }
 

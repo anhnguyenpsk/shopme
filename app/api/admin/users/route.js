@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch all users with pagination, search, and role filtering
 export async function GET(request) {
@@ -22,7 +24,7 @@ export async function GET(request) {
 
     // Build where clause
     const whereClause = {};
-    
+
     if (search) {
       whereClause.OR = [
         { email: { contains: search, mode: 'insensitive' } },

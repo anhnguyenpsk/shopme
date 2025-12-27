@@ -2,6 +2,8 @@ import { serve } from 'inngest/next';
 import { inngest } from '@/lib/inngest';
 import { inngestFunctions } from '@/lib/inngest-functions';
 
+export const dynamic = 'force-dynamic';
+
 // Create the Inngest API handler
 export const { GET, POST, PUT } = serve({
   client: inngest,

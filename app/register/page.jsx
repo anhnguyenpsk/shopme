@@ -21,31 +21,31 @@ export default function RegisterPage() {
 
   const validate = () => {
     if (!name || !email || !password || !confirmPassword) {
-      toast.error("Please fill out all required fields");
+      toast.error("Vui lòng điền vào tất cả các trường bắt buộc");
       return false;
     }
     if (name.trim().length < 2 || name.trim().length > 50) {
-      toast.error("Name must be between 2 and 50 characters");
+      toast.error("Tên phải từ 2 đến 50 ký tự");
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address");
+      toast.error("Vui lòng nhập địa chỉ email hợp lệ");
       return false;
     }
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error("Mật khẩu phải có ít nhất 8 ký tự");
       return false;
     }
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("Mật khẩu không khớp");
       return false;
     }
     // Validate phone number format (Vietnam) if provided
     if (phone && phone.trim()) {
       const phoneRegex = /^(\+84|0)(3|5|7|8|9)([0-9]{8})$/;
       if (!phoneRegex.test(phone.replace(/[\s-]/g, ''))) {
-        toast.error("Please enter a valid Vietnam phone number (e.g., 0912345678 or +84912345678)");
+        toast.error("Vui lòng nhập số điện thoại Việt Nam hợp lệ (ví dụ: 0912345678 hoặc +84912345678)");
         return false;
       }
     }
@@ -62,9 +62,9 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          email, 
+        body: JSON.stringify({
+          name,
+          email,
           password,
           phone: phone.trim() || undefined,
           gender: gender || undefined,
@@ -74,19 +74,19 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const msg = await res.text();
-        throw new Error(msg || "Registration failed");
+        throw new Error(msg || "Đăng ký thất bại");
       }
 
       const data = await res.json();
-      
-      toast.success("Account created! Please verify your email.");
+
+      toast.success("Tạo tài khoản thành công! Vui lòng xác thực email của bạn.");
 
       // Redirect to verification page with token and email
       router.push(
         `/register/verify?email=${encodeURIComponent(email)}&token=${data.token}`
       );
     } catch (error) {
-      toast.error(error.message || "Something went wrong");
+      toast.error(error.message || "Đã xảy ra lỗi");
       console.error("REGISTER_ERROR:", error);
     } finally {
       setIsLoading(false);
@@ -98,24 +98,24 @@ export default function RegisterPage() {
       {/* Back to Home - top-left fixed, matching Login */}
       <div className="fixed top-4 left-4 z-50">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/">← Back to Home</Link>
+          <Link href="/">← Về Trang chủ</Link>
         </Button>
       </div>
 
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            Tạo tài khoản mới
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Join ShopMe to start shopping and selling
+            Tham gia ShopMe để bắt đầu mua sắm và bán hàng
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">Họ và tên</Label>
               <Input
                 id="name"
                 name="name"
@@ -124,13 +124,13 @@ export default function RegisterPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
+                placeholder="Nhập tên của bạn"
                 disabled={isLoading}
               />
             </div>
 
             <div>
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Địa chỉ Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -139,13 +139,13 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 disabled={isLoading}
               />
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 name="password"
@@ -154,13 +154,13 @@ export default function RegisterPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder="Tạo mật khẩu"
                 disabled={isLoading}
               />
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -169,17 +169,17 @@ export default function RegisterPage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter your password"
+                placeholder="Nhập lại mật khẩu"
                 disabled={isLoading}
               />
             </div>
 
             <div className="pt-2 border-t border-gray-200">
-              <p className="text-sm text-gray-600 mb-3">Optional information (can be added later)</p>
-              
+              <p className="text-sm text-gray-600 mb-3">Thông tin bổ sung (tùy chọn)</p>
+
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="phone">Phone number</Label>
+                  <Label htmlFor="phone">Số điện thoại</Label>
                   <Input
                     id="phone"
                     name="phone"
@@ -193,7 +193,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">Giới tính</Label>
                   <select
                     id="gender"
                     name="gender"
@@ -202,15 +202,15 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="">Chọn giới tính</option>
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
                   </select>
                 </div>
 
                 <div>
-                  <Label htmlFor="dateOfBirth">Date of birth</Label>
+                  <Label htmlFor="dateOfBirth">Ngày sinh</Label>
                   <Input
                     id="dateOfBirth"
                     name="dateOfBirth"
@@ -227,15 +227,15 @@ export default function RegisterPage() {
 
           <div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
             </Button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{" "}
+              Đã có tài khoản?{" "}
               <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign in
+                Đăng nhập
               </a>
             </p>
           </div>

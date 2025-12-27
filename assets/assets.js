@@ -264,13 +264,6 @@ export const addressDummyData = {
     createdAt: 'Sat Jul 19 2025 14:51:25 GMT+0530 (India Standard Time)',
 }
 
-export const couponDummyData = [
-    { code: "NEW20", description: "20% Off for New Users", discount: 20, forNewUser: true, forMember: false, isPublic: false, expiresAt: "2026-12-31T00:00:00.000Z", createdAt: "2025-08-22T08:35:31.183Z" },
-    { code: "NEW10", description: "10% Off for New Users", discount: 10, forNewUser: true, forMember: false, isPublic: false, expiresAt: "2026-12-31T00:00:00.000Z", createdAt: "2025-08-22T08:35:50.653Z" },
-    { code: "OFF20", description: "20% Off for All Users", discount: 20, forNewUser: false, forMember: false, isPublic: false, expiresAt: "2026-12-31T00:00:00.000Z", createdAt: "2025-08-22T08:42:00.811Z" },
-    { code: "OFF10", description: "10% Off for All Users", discount: 10, forNewUser: false, forMember: false, isPublic: false, expiresAt: "2026-12-31T00:00:00.000Z", createdAt: "2025-08-22T08:42:21.279Z" },
-    { code: "PLUS10", description: "20% Off for Members", discount: 10, forNewUser: false, forMember: true, isPublic: false, expiresAt: "2027-03-06T00:00:00.000Z", createdAt: "2025-08-22T11:38:20.194Z" }
-]
 
 export const dummyUserData = {
     id: "user_31dQbH27HVtovbs13X2cmqefddM",
@@ -292,8 +285,6 @@ export const orderDummyData = [
         paymentMethod: "COD",
         createdAt: "2025-08-22T09:15:03.929Z",
         updatedAt: "2025-08-22T09:15:50.723Z",
-        isCouponUsed: true,
-        coupon: dummyRatingsData[2],
         orderItems: [
             { orderId: "cmemm75h5001jtat89016h1p3", productId: "cmemlydnx0017tat8h3rg92hz", quantity: 1, price: 2180500, product: productDummyData[0], },
             { orderId: "cmemm75h5001jtat89016h1p3", productId: "cmemlxgnk0015tat84qm8si5v", quantity: 1, price: 3652500, product: productDummyData[1], }
@@ -312,8 +303,6 @@ export const orderDummyData = [
         paymentMethod: "COD",
         createdAt: "2025-08-22T09:14:35.923Z",
         updatedAt: "2025-08-22T09:15:52.535Z",
-        isCouponUsed: true,
-        coupon: couponDummyData[0],
         orderItems: [
             { orderId: "cmemm6jv7001htat8vmm3gxaf", productId: "cmemm1f3y001dtat8liccisar", quantity: 1, price: 5610500, product: productDummyData[2], },
             { orderId: "cmemm6jv7001htat8vmm3gxaf", productId: "cmemm0nh2001btat8glfvhry1", quantity: 1, price: 2425500, product: productDummyData[3], },

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request, ctx) {
     const { params } = await ctx;
     const { dimensions } = params;

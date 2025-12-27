@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import authSeller from "@/lib/authSeller";
 import prisma from "@/lib/prisma";
+
+export const dynamic = 'force-dynamic';
 
 // GET /api/store/settings - Fetch store settings
 export async function GET(request) {
@@ -92,9 +94,9 @@ export async function PATCH(request) {
       },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Store settings updated successfully",
-      store: updatedStore 
+      store: updatedStore
     });
   } catch (error) {
     const message = error?.message || "Failed to update store settings";

@@ -1,26 +1,31 @@
-import { Outfit } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import StoreProvider from "./StoreProvider";
 import "./globals.css";
 import AuthSessionProvider from "./AuthSessionProvider";
-import CartSyncProvider from "@/components/CartSyncProvider";
+import CartSyncProvider from "@/components/checkout/CartSyncProvider";
+import ChatWidget from "@/components/chat/ChatWidget";
 
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "600"] });
+const beVietnamPro = Be_Vietnam_Pro({
+    subsets: ["latin", "vietnamese"],
+    weight: ["400", "500", "600", "700"]
+});
 
 export const metadata = {
-    title: "ShopMe. - Shop smarter",
-    description: "ShopMe. - Shop smarter",
+    title: "ShopMe. - Mua sắm thông minh hơn",
+    description: "ShopMe. - Mua sắm thông minh hơn",
 };
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
-            <body className={`${outfit.className} antialiased`}>
+        <html lang="vi">
+            <body className={`${beVietnamPro.className} antialiased`}>
                 <AuthSessionProvider>
                     <StoreProvider>
                         <CartSyncProvider>
                             <Toaster />
                             {children}
+                            <ChatWidget />
                         </CartSyncProvider>
                     </StoreProvider>
                 </AuthSessionProvider>
@@ -28,3 +33,4 @@ export default function RootLayout({ children }) {
         </html>
     );
 }
+

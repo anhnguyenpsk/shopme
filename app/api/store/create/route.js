@@ -1,13 +1,15 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
 
 // API to create a store for a user
 export async function POST(request) {
     try {
         const session = await getServerSession(authOptions);
-        
+
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -68,15 +70,7 @@ export async function POST(request) {
             }
         });
 
-        // Update user role to STORE_OWNER
-        await prisma.user.update({
-            where: {
-                id: session.user.id
-            },
-            data: {
-                role: "STORE_OWNER"
-            }
-        });
+        // Role update will be handled by Admin upon approval
 
         return NextResponse.json({ message: "Store application submitted successfully! Waiting for admin approval." });
 
@@ -90,7 +84,7 @@ export async function POST(request) {
 export async function GET(request) {
     try {
         const session = await getServerSession(authOptions);
-        
+
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

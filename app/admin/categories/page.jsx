@@ -3,34 +3,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Search, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Folder, 
+import {
+  Search,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Folder,
   AlertCircle,
   CheckCircle,
   Edit,
@@ -41,23 +41,23 @@ import toast from 'react-hot-toast';
 export default function CategoriesManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  
+
   // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchInput, setSearchInput] = useState('');
-  
+
   // Dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -83,12 +83,12 @@ export default function CategoriesManagement() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
 
       const response = await fetch(`/api/admin/categories?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setCategories(data.categories);
@@ -126,6 +126,7 @@ export default function CategoriesManagement() {
       name: '',
       slug: '',
       isActive: true,
+      parentId: null,
     });
     setFormErrors({});
     setIsCreating(true);
@@ -138,6 +139,7 @@ export default function CategoriesManagement() {
       name: category.name,
       slug: category.slug,
       isActive: category.isActive,
+      parentId: category.parent ? category.parent.id : null,
     });
     setFormErrors({});
     setIsCreating(false);
@@ -164,10 +166,10 @@ export default function CategoriesManagement() {
 
     setSubmitting(true);
     try {
-      const url = isCreating 
-        ? '/api/admin/categories' 
+      const url = isCreating
+        ? '/api/admin/categories'
         : `/api/admin/categories/${selectedCategory.id}`;
-      
+
       const method = isCreating ? 'POST' : 'PUT';
 
       const response = await fetch(url, {
@@ -225,11 +227,11 @@ export default function CategoriesManagement() {
     <div className="text-slate-500">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl">
-          Categories <span className="text-slate-800 font-medium">Management</span>
+          Quản lý <span className="text-slate-800 font-medium">Danh mục</span>
         </h1>
         <Button onClick={openCreateDialog}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Category
+          Thêm danh mục
         </Button>
       </div>
 
@@ -239,7 +241,7 @@ export default function CategoriesManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Folder className="h-4 w-4" />
-              Total Categories
+              Tổng danh mục
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -250,7 +252,7 @@ export default function CategoriesManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              Active
+              Hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -261,7 +263,7 @@ export default function CategoriesManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              Inactive
+              Ngừng hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -273,17 +275,17 @@ export default function CategoriesManagement() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Search by Category Name</Label>
+              <Label htmlFor="search">Tìm kiếm theo tên danh mục</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search categories..."
+                  placeholder="Tìm kiếm danh mục..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
@@ -291,18 +293,18 @@ export default function CategoriesManagement() {
               </div>
             </div>
             <div className="w-full md:w-48">
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">Lọc theo trạng thái</Label>
               <Select value={statusFilter} onValueChange={(value) => {
                 setStatusFilter(value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}>
                 <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder="Tất cả danh mục" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">Tất cả danh mục</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -313,9 +315,9 @@ export default function CategoriesManagement() {
       {/* Categories Grid */}
       <Card>
         <CardHeader>
-          <CardTitle>All Categories</CardTitle>
+          <CardTitle>Tất cả danh mục</CardTitle>
           <CardDescription>
-            Manage all product categories
+            Quản lý tất cả danh mục sản phẩm
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -325,7 +327,7 @@ export default function CategoriesManagement() {
             </div>
           ) : categories.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No categories found
+              Không tìm thấy danh mục nào
             </div>
           ) : (
             <>
@@ -339,14 +341,19 @@ export default function CategoriesManagement() {
                           <h3 className="font-semibold text-lg">{category.name}</h3>
                         </div>
                         <Badge variant={category.isActive ? 'default' : 'destructive'}>
-                          {category.isActive ? 'Active' : 'Inactive'}
+                          {category.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-slate-500 mb-3">
+                      <p className="text-sm text-slate-500 mb-2">
                         Slug: <span className="font-mono">{category.slug}</span>
                       </p>
+                      {category.parent && (
+                        <p className="text-sm text-slate-500 mb-3">
+                          Parent: <span className="font-medium text-slate-700">{category.parent.name}</span>
+                        </p>
+                      )}
                       <p className="text-sm text-slate-600 mb-4">
-                        {category._count.products} product{category._count.products !== 1 ? 's' : ''}
+                        {category._count.products} sản phẩm
                       </p>
                       <div className="flex gap-2">
                         <Button
@@ -356,7 +363,7 @@ export default function CategoriesManagement() {
                           onClick={() => openEditDialog(category)}
                         >
                           <Edit className="h-4 w-4 mr-1" />
-                          Edit
+                          Sửa
                         </Button>
                         <Button
                           variant="outline"
@@ -376,9 +383,9 @@ export default function CategoriesManagement() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-slate-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} categories
+                  Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} trong số{' '}
+                  {pagination.total} danh mục
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -388,7 +395,7 @@ export default function CategoriesManagement() {
                     disabled={pagination.page === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -396,7 +403,7 @@ export default function CategoriesManagement() {
                     onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Next
+                    Tiếp
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -410,43 +417,67 @@ export default function CategoriesManagement() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isCreating ? 'Create New Category' : 'Edit Category'}</DialogTitle>
+            <DialogTitle>{isCreating ? 'Tạo danh mục mới' : 'Chỉnh sửa danh mục'}</DialogTitle>
             <DialogDescription>
-              {isCreating 
-                ? 'Add a new category to the system.' 
-                : 'Update category information.'}
+              {isCreating
+                ? 'Thêm danh mục mới vào hệ thống.'
+                : 'Cập nhật thông tin danh mục.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="category-name">Category Name *</Label>
+              <Label htmlFor="category-name">Tên danh mục *</Label>
               <Input
                 id="category-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Electronics, Clothing"
+                placeholder="ví dụ: Điện tử, Quần áo"
               />
               {formErrors.name && (
                 <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="category-slug">Slug (optional)</Label>
+              <Label htmlFor="category-slug">Slug (tùy chọn)</Label>
               <Input
                 id="category-slug"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="Leave empty to auto-generate"
+                placeholder="Để trống để tự động tạo"
               />
               <p className="text-xs text-slate-500 mt-1">
-                URL-friendly identifier. Auto-generated from name if left empty.
+                Định danh thân thiện với URL. Tự động tạo từ tên nếu để trống.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="parent-category">Danh mục cha (tùy chọn)</Label>
+              <Select
+                value={formData.parentId || "none"}
+                onValueChange={(value) => setFormData({ ...formData, parentId: value === "none" ? null : value })}
+              >
+                <SelectTrigger id="parent-category">
+                  <SelectValue placeholder="Chọn danh mục cha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Không có (Cấp cao nhất)</SelectItem>
+                  {categories
+                    .filter(c => c.id !== selectedCategory?.id) // Prevent selecting self as parent
+                    .map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 mt-1">
+                Chọn danh mục cha để tạo danh mục con.
               </p>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="category-active">Active Status</Label>
+                <Label htmlFor="category-active">Trạng thái hoạt động</Label>
                 <p className="text-xs text-slate-500">
-                  Inactive categories won't appear in product listings
+                  Danh mục không hoạt động sẽ không xuất hiện trong danh sách sản phẩm
                 </p>
               </div>
               <Switch
@@ -458,10 +489,10 @@ export default function CategoriesManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={submitting}>
-              Cancel
+              Hủy
             </Button>
             <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Saving...' : (isCreating ? 'Create Category' : 'Update Category')}
+              {submitting ? 'Đang lưu...' : (isCreating ? 'Tạo danh mục' : 'Cập nhật danh mục')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -471,23 +502,23 @@ export default function CategoriesManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
+            <DialogTitle>Xóa danh mục</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedCategory?.name}"? 
-              This action cannot be undone.
+              Bạn có chắc chắn muốn xóa "{selectedCategory?.name}"?
+              Hành động này không thể hoàn tác.
               {selectedCategory?._count?.products > 0 && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  Warning: This category has {selectedCategory._count.products} product(s) associated with it.
+                  Cảnh báo: Danh mục này đang có {selectedCategory._count.products} sản phẩm liên kết.
                 </span>
               )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
+              Hủy
             </Button>
             <Button variant="destructive" onClick={handleDeleteCategory}>
-              Delete Category
+              Xóa danh mục
             </Button>
           </DialogFooter>
         </DialogContent>

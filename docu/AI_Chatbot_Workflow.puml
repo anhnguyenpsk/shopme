@@ -1,0 +1,184 @@
+@startuml AI_Chatbot_Workflow
+!theme vibrant
+
+title Quy trình chi tiết AI Chatbot ShopMe (ShopMe AI Chatbot - Detailed Workflow Diagram)
+
+' === TÁC NHÂN & THÀNH PHẦN (ACTORS & PARTICIPANTS) ===
+actor "Khách hàng\n(Customer)" as Customer
+boundary "Giao diện Chat\n(React Component)" as UI
+control "Xử lý phía Server\n(actions/chat.js)" as ServerAction
+entity "Google Gemini AI\n(gemini-2.0-flash)" as AI
+database "Cơ sở dữ liệu\n(PostgreSQL / Neon)" as DB
+
+' === CHÚ THÍCH (LEGEND) ===
+legend right
+  |= Màu sắc |= Mô tả (Description) |
+  | <#LightBlue> | Lớp giao diện người dùng (User Interface Layer) |
+  | <#LightGreen> | Xử lý Backend (Backend Processing) |
+  | <#LightYellow> | Xử lý AI (AI Processing) |
+  | <#LightPink> | Thao tác cơ sở dữ liệu (Database Operations) |
+endlegend
+
+' === QUY TRÌNH CHÍNH (MAIN WORKFLOW) ===
+== Giai đoạn 1: Khởi tạo phiên (Phase 1: Session Initialization) ==
+Customer -> UI: Mở cửa sổ chat\n(Open chat window)
+activate UI #LightBlue
+
+alt Không có sessionId (No existing session)
+    UI -> ServerAction: **createChatSession**(userId)
+    activate ServerAction #LightGreen
+    ServerAction -> DB: prisma.chatSession.create()
+    activate DB #LightPink
+    DB --> ServerAction: Session { id }
+    deactivate DB
+    ServerAction --> UI: { id: sessionId }
+    deactivate ServerAction
+else Có sessionId (Existing session)
+    UI -> ServerAction: **getChatHistory**(sessionId)
+    activate ServerAction #LightGreen
+    ServerAction -> DB: prisma.chatMessage.findMany()
+    activate DB #LightPink
+    DB --> ServerAction: Danh sách tin nhắn cũ (Old messages list)
+    deactivate DB
+    ServerAction --> UI: Message[] (role, content)
+    deactivate ServerAction
+    UI -> UI: setMessages(history)
+end
+
+== Giai đoạn 2: Người dùng gửi tin nhắn (Phase 2: User Message Submission) ==
+Customer -> UI: Nhập và gửi tin nhắn\n"Show me Apple products"
+UI -> UI: setMessages([...prev, userMessage])
+UI -> UI: setIsLoading(true)
+UI -> ServerAction: **runAgent**(message, sessionId, history, userId)
+activate ServerAction #LightGreen
+
+note right of ServerAction
+  **runAgent** - Điểm nhập chính (Main Entry Point)
+  Thực hiện quy trình 3 bước:
+  1. Trích xuất ý định (Extract Intent)
+  2. Lấy dữ liệu (Fetch Data)
+  3. Tạo phản hồi (Generate Response)
+end note
+
+== Giai đoạn 3: Bước 1 - Trích xuất ý định (Phase 3: Step 1 - Intent Extraction) ==
+ServerAction -> AI: **extractIntent**(message, history)
+activate AI #LightYellow
+
+note right of AI
+  **generateObject** với Zod Schema:
+  - intent: SEARCH_PRODUCTS (Tìm sản phẩm) | CHECK_PROMOTIONS (Xem khuyến mãi) | GENERAL_CHAT (Chat chung)
+  - searchParams: { keywords[], minPrice, maxPrice, limit }
+end note
+
+AI -> AI: Phân tích ngữ nghĩa tin nhắn (Analyze message semantics)
+AI --> ServerAction: IntentSchema {\n  intent: "SEARCH_PRODUCTS",\n  searchParams: { keywords: ["Apple"], limit: 5 }\n}
+deactivate AI
+
+alt Trích xuất ý định thất bại (Intent Extraction Failed)
+    ServerAction -> ServerAction: **fallbackIntentDetection**(message)
+    note right
+      Fallback sử dụng so khớp từ khóa (keyword matching):
+      - "product", "find", "search" → SEARCH_PRODUCTS
+      - "promo", "discount", "voucher" → CHECK_PROMOTIONS
+      - Khác (Else) → GENERAL_CHAT
+    end note
+end
+
+== Giai đoạn 4: Bước 2 - Lấy dữ liệu từ DB (Phase 4: Step 2 - Data Fetching) ==
+alt intent == "SEARCH_PRODUCTS"
+    ServerAction -> DB: **fetchProducts**(searchParams)
+    activate DB #LightPink
+    
+    note right of DB
+      **Prisma Query với các bộ lọc (filters):**
+      - isActive: true
+      - quantity > 0
+      - OR: [name, description, brandRef.name,
+             categoryRef.name, store.name] chứa keywords
+      - Lọc theo khoảng giá (Price range filter - nếu có)
+      - Giới hạn kết quả (Limit)
+    end note
+    
+    DB -> DB: prisma.product.findMany({\n  where: { OR: [...] },\n  select: PUBLIC_PRODUCT_FIELDS\n})
+    DB --> ServerAction: Product[] (name, price, description,\ncategory, brand, store, stockLevel)
+    deactivate DB
+    
+else intent == "CHECK_PROMOTIONS"
+    ServerAction -> DB: **fetchPromotions**(limit)
+    activate DB #LightPink
+    
+    note right of DB
+      **VoucherCampaign Query:**
+      - status: ACTIVE
+      - start_date <= now
+      - end_date >= now
+      - Sắp xếp theo ngày kết thúc tăng dần (Order by end_date ASC)
+    end note
+    
+    DB -> DB: prisma.voucherCampaign.findMany({\n  where: { status: "ACTIVE", ... },\n  select: PUBLIC_VOUCHER_FIELDS\n})
+    DB --> ServerAction: Promotion[] (name, code, discount,\nvalidUntil, minOrder)
+    deactivate DB
+    
+else intent == "GENERAL_CHAT"
+    ServerAction -> ServerAction: Không lấy dữ liệu (No data fetching)
+end
+
+== Giai đoạn 5: Bước 3 - Tạo phản hồi AI (Phase 5: Step 3 - Response Generation) ==
+ServerAction -> AI: **generateResponse**(message, history, intent, data)
+activate AI #LightYellow
+
+note right of AI
+  **System Prompt bao gồm:**
+  - Vai trò: Trợ lý mua sắm cho ShopMe (Shopping Assistant)
+  - Hướng dẫn (Guidelines): Đề xuất sản phẩm còn hàng
+  - Định dạng tiền tệ: VND
+  - Dữ liệu tiêm vào (Data injection): Products/Promotions JSON
+end note
+
+AI -> AI: generateText với ngữ cảnh (context):\n- Lịch sử hội thoại (Conversation history)\n- Sản phẩm/Khuyến mãi đã lấy (Fetched Data)\n- Tin nhắn hiện tại của User
+AI --> ServerAction: Văn bản phản hồi đã định dạng (Formatted response text)
+deactivate AI
+
+== Giai đoạn 6: Ghi Log & Lưu lịch sử (Phase 6: Audit Logging & History Saving) ==
+group Các thao tác song song (Parallel Operations)
+    ServerAction -> DB: **logChatInteraction**()
+    activate DB #LightPink
+    note right of DB
+      Ghi log vào bảng ChatLogs:
+      - sessionId, userQuery
+      - detectedIntent (Ý định phát hiện)
+      - toolUsed, toolInput, toolOutput
+      - finalResponse (Phản hồi cuối), responseTime (Thời gian xử lý)
+      - errorMessage (Lỗi nếu có)
+    end note
+    DB --> ServerAction: Log đã lưu (Log saved)
+    deactivate DB
+    
+    ServerAction -> DB: **saveToHistory**(sessionId, userMessage, assistantMessage)
+    activate DB #LightPink
+    DB -> DB: prisma.chatMessage.createMany()
+    DB --> ServerAction: Tin nhắn đã lưu (Messages saved)
+    deactivate DB
+end
+
+== Giai đoạn 7: Phản hồi về Client (Phase 7: Response to Client) ==
+ServerAction --> UI: {\n  success: true,\n  response: "Đây là các sản phẩm Apple...",\n  intent: "SEARCH_PRODUCTS",\n  searchParams: {...}\n}
+deactivate ServerAction
+
+UI -> UI: setMessages([...prev, assistantResponse])
+UI -> UI: setIsLoading(false)
+UI -> UI: Auto-scroll to bottom (Tự động cuộn xuống)
+UI --> Customer: Hiển thị phản hồi trong bong bóng chat (Chat bubble)
+
+deactivate UI
+
+== Luồng xử lý lỗi (Error Handling Flow) ==
+note over ServerAction, AI
+  **Xử lý lỗi (Error Handling):**
+  - Nếu AI API gặp lỗi → Ghi log lỗi + trả về tin nhắn lỗi thân thiện
+  - Nếu truy vấn DB thất bại → Bắt lỗi (Catch) và ghi log
+  - Thời gian phản hồi được ghi vào audit log
+  - Kích hoạt phát hiện ý định dự phòng (Fallback intent) khi AI trích xuất thất bại
+end note
+
+@enduml

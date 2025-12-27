@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch all orders for the logged-in store owner
 export async function GET(request) {
@@ -84,7 +86,15 @@ export async function PATCH(request) {
 
         // Build update data object conditionally
         const updateData = {};
-        if (status) updateData.status = status;
+        if (status) {
+            if (status === 'COMPLETED') {
+                return NextResponse.json({ error: 'Cannot manually set order to COMPLETED. Customer confirmation required.' }, { status: 400 });
+            }
+            updateData.status = status;
+            if (status === 'DELIVERED') {
+                updateData.deliveredAt = new Date();
+            }
+        }
         if (typeof isPaid === 'boolean') updateData.isPaid = isPaid;
 
         const updatedOrder = await prisma.order.update({
