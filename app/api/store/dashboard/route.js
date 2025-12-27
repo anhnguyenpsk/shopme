@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import authSeller from "@/lib/authSeller";
 import prisma from "@/lib/prisma";
+
+export const dynamic = 'force-dynamic';
 
 // GET /api/store/dashboard - aggregate metrics for the seller's store
 export async function GET(request) {
@@ -17,7 +19,7 @@ export async function GET(request) {
       prisma.order.count({ where: { storeId } }),
       prisma.product.count({ where: { storeId } }),
       prisma.order.findMany({ where: { storeId }, select: { total: true } }),
-      prisma.store.findUnique({ 
+      prisma.store.findUnique({
         where: { id: storeId },
         select: {
           id: true,

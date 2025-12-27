@@ -83,15 +83,15 @@ const BestSelling = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800 text-sm font-medium mb-4">
             <TrendingUp className="w-4 h-4 mr-2" />
-            Trending Now
+            Đang thịnh hành
           </div>
 
           <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-            Best Selling Products
+            Sản phẩm bán chạy
           </h2>
 
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Discover our most popular products loved by thousands of customers worldwide
+            Khám phá các sản phẩm phổ biến nhất được yêu thích bởi hàng ngàn khách hàng
           </p>
         </div>
 
@@ -112,7 +112,7 @@ const BestSelling = () => {
         <div className="text-center">
           <Button asChild size="lg" variant="outline" className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white">
             <Link href="/shop">
-              View All Products
+              Xem tất cả sản phẩm
             </Link>
           </Button>
         </div>

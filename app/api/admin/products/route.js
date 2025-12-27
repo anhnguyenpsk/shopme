@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch all products from all stores with pagination and filters
 export async function GET(request) {
@@ -24,7 +26,7 @@ export async function GET(request) {
 
     // Build where clause
     const whereClause = {};
-    
+
     if (storeId) {
       whereClause.storeId = storeId;
     }
@@ -92,7 +94,7 @@ export async function GET(request) {
       const avgRating = ratings.length > 0
         ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
         : 0;
-      
+
       return {
         ...product,
         averageRating: Math.round(avgRating * 10) / 10,

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireSellerContext, isHttpError } from "@/lib/auth/guards";
 
+export const dynamic = 'force-dynamic';
+
 const DEFAULT_PAGE_SIZE = 20;
 
 function parseIntParam(value, defaultValue) {

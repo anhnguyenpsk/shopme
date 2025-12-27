@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 // POST - Create a new rating/review
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -34,7 +36,7 @@ export async function POST(request) {
       where: {
         id: orderId,
         userId: session.user.id,
-        status: 'DELIVERED', // Only delivered orders can be rated
+        status: { in: ['DELIVERED', 'COMPLETED'] }, // Allow rating for Delivered and Completed orders
         orderItems: {
           some: { productId }
         }
@@ -47,8 +49,8 @@ export async function POST(request) {
     });
 
     if (!order) {
-      return NextResponse.json({ 
-        error: 'Order not found, not delivered, or product not in order' 
+      return NextResponse.json({
+        error: 'Order not found, not delivered, or product not in order'
       }, { status: 404 });
     }
 
@@ -64,8 +66,8 @@ export async function POST(request) {
     });
 
     if (existingRating) {
-      return NextResponse.json({ 
-        error: 'You have already rated this product for this order' 
+      return NextResponse.json({
+        error: 'You have already rated this product for this order'
       }, { status: 400 });
     }
 
@@ -100,7 +102,7 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

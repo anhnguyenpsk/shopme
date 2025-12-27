@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { generateVerificationCode, createVerificationToken } from '@/lib/verification';
 import { sendVerificationEmail } from '@/lib/email';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {

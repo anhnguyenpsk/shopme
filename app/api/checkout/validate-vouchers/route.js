@@ -10,6 +10,8 @@ import {
   groupVoucherResultsByType,
 } from "@/lib/vouchers/validation";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     const session = await requireAuthSession();
@@ -99,7 +101,3 @@ export async function POST(request) {
     );
   }
 }
-
-
-
-

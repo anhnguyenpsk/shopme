@@ -1,9 +1,9 @@
 'use client'
-import ProductCard from "@/components/ProductCard"
+import ProductCard from "@/components/products/ProductCard"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { MailIcon, MapPinIcon, PhoneIcon } from "lucide-react"
-import Loading from "@/components/Loading"
+import Loading from "@/components/shared/Loading"
 import Image from "next/image"
 import axios from "axios"
 import toast from "react-hot-toast"
@@ -19,7 +19,7 @@ export default function StoreShop() {
 
     const fetchStoreData = async () => {
         if (!username) {
-            setError("Store username is required")
+            setError("Tên cửa hàng là bắt buộc")
             setLoading(false)
             return
         }
@@ -30,8 +30,8 @@ export default function StoreShop() {
             setProducts(data.products)
         } catch (error) {
             console.error("Error fetching store data:", error)
-            setError(error.response?.data?.error || "Store not found")
-            toast.error(error.response?.data?.error || "Failed to load store")
+            setError(error.response?.data?.error || "Không tìm thấy cửa hàng")
+            toast.error(error.response?.data?.error || "Lỗi tải cửa hàng")
         } finally {
             setLoading(false)
         }
@@ -49,7 +49,7 @@ export default function StoreShop() {
         return (
             <div className="min-h-[70vh] mx-6 flex items-center justify-center">
                 <div className="text-center">
-                    <h1 className="text-2xl font-semibold text-slate-800 mb-2">Store Not Found</h1>
+                    <h1 className="text-2xl font-semibold text-slate-800 mb-2">Không tìm thấy cửa hàng</h1>
                     <p className="text-slate-600">{error}</p>
                 </div>
             </div>
@@ -96,15 +96,15 @@ export default function StoreShop() {
             {storeInfo && !storeInfo.isActive && (
                 <div className="max-w-7xl mx-auto mt-6">
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">Store Temporarily Closed</h3>
-                        <p className="text-yellow-700">This store is not currently accepting new orders.</p>
+                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">Cửa hàng tạm thời đóng cửa</h3>
+                        <p className="text-yellow-700">Cửa hàng này hiện không nhận đơn hàng mới.</p>
                     </div>
                 </div>
             )}
 
             {/* Products */}
             <div className="max-w-7xl mx-auto mb-40">
-                <h1 className="text-2xl mt-12">Shop <span className="text-slate-800 font-medium">Products</span></h1>
+                <h1 className="text-2xl mt-12">Sản phẩm <span className="text-slate-800 font-medium">Cửa hàng</span></h1>
                 {products.length > 0 ? (
                     <div className="mt-5 grid grid-cols-2 sm:flex flex-wrap gap-6 xl:gap-12 mx-auto">
                         {products.map((product) => <ProductCard key={product.id} product={product} />)}
@@ -112,9 +112,9 @@ export default function StoreShop() {
                 ) : (
                     <div className="mt-5 text-center py-20">
                         <p className="text-slate-500 text-lg">
-                            {storeInfo && !storeInfo.isActive 
-                                ? "This store is temporarily closed." 
-                                : "No products available in this store yet."}
+                            {storeInfo && !storeInfo.isActive
+                                ? "Cửa hàng đang tạm đóng cửa."
+                                : "Chưa có sản phẩm nào trong cửa hàng."}
                         </p>
                     </div>
                 )}

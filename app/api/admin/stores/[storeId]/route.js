@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+
+export const dynamic = 'force-dynamic';
 
 export async function PATCH(request, { params }) {
     const session = await getServerSession(authOptions);
@@ -34,6 +36,21 @@ export async function PATCH(request, { params }) {
             where: { id: storeId },
             data: dataToUpdate,
         });
+
+        // Upgrade user role if approved
+        if (dataToUpdate.status === 'approved') {
+            await prisma.user.update({
+                where: { id: updatedStore.userId },
+                data: { role: 'STORE_OWNER' }
+            });
+        }
+        // Downgrade user role if rejected or suspended
+        else if (dataToUpdate.status === 'rejected' || dataToUpdate.isActive === false) {
+            await prisma.user.update({
+                where: { id: updatedStore.userId },
+                data: { role: 'CUSTOMER' }
+            });
+        }
 
         return NextResponse.json(updatedStore);
     } catch (error) {

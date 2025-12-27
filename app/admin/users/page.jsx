@@ -3,25 +3,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
-  Users, 
-  ShoppingBag, 
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  ShoppingBag,
   Store,
   UserCog
 } from 'lucide-react';
@@ -31,12 +31,12 @@ import Image from 'next/image';
 export default function UsersManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, byRole: {} });
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  
+
   // Filters
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -58,12 +58,12 @@ export default function UsersManagement() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (roleFilter && roleFilter !== 'all') params.append('role', roleFilter);
 
       const response = await fetch(`/api/admin/users?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users);
@@ -133,7 +133,7 @@ export default function UsersManagement() {
   return (
     <div className="text-slate-500">
       <h1 className="text-2xl mb-6">
-        User <span className="text-slate-800 font-medium">Management</span>
+        Quản lý <span className="text-slate-800 font-medium">Người dùng</span>
       </h1>
 
       {/* Statistics Cards */}
@@ -142,7 +142,7 @@ export default function UsersManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Total Users
+              Tổng người dùng
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -153,7 +153,7 @@ export default function UsersManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
-              Customers
+              Khách hàng
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -164,7 +164,7 @@ export default function UsersManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Store className="h-4 w-4" />
-              Store Owners
+              Chủ cửa hàng
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -175,7 +175,7 @@ export default function UsersManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <UserCog className="h-4 w-4" />
-              Admins
+              Admin
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -187,17 +187,17 @@ export default function UsersManagement() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Search by Name or Email</Label>
+              <Label htmlFor="search">Tìm kiếm theo Tên hoặc Email</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search users..."
+                  placeholder="Tìm kiếm người dùng..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
@@ -205,18 +205,18 @@ export default function UsersManagement() {
               </div>
             </div>
             <div className="w-full md:w-48">
-              <Label htmlFor="role-filter">Filter by Role</Label>
+              <Label htmlFor="role-filter">Lọc theo vai trò</Label>
               <Select value={roleFilter} onValueChange={(value) => {
                 setRoleFilter(value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}>
                 <SelectTrigger id="role-filter">
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder="Tất cả vai trò" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="CUSTOMER">Customer</SelectItem>
-                  <SelectItem value="STORE_OWNER">Store Owner</SelectItem>
+                  <SelectItem value="all">Tất cả vai trò</SelectItem>
+                  <SelectItem value="CUSTOMER">Khách hàng</SelectItem>
+                  <SelectItem value="STORE_OWNER">Chủ cửa hàng</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -228,9 +228,9 @@ export default function UsersManagement() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
+          <CardTitle>Tất cả người dùng</CardTitle>
           <CardDescription>
-            Manage user accounts and roles
+            Quản lý tài khoản và vai trò người dùng
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,7 +240,7 @@ export default function UsersManagement() {
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No users found
+              Không tìm thấy người dùng
             </div>
           ) : (
             <>
@@ -248,12 +248,12 @@ export default function UsersManagement() {
                 <table className="w-full">
                   <thead className="border-b">
                     <tr className="text-left">
-                      <th className="pb-3 font-medium">User</th>
+                      <th className="pb-3 font-medium">Người dùng</th>
                       <th className="pb-3 font-medium">Email</th>
-                      <th className="pb-3 font-medium">Status</th>
-                      <th className="pb-3 font-medium">Store</th>
-                      <th className="pb-3 font-medium">Joined</th>
-                      <th className="pb-3 font-medium text-right">Actions</th>
+                      <th className="pb-3 font-medium">Trạng thái</th>
+                      <th className="pb-3 font-medium">Cửa hàng</th>
+                      <th className="pb-3 font-medium">Ngày tham gia</th>
+                      <th className="pb-3 font-medium text-right">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -303,19 +303,19 @@ export default function UsersManagement() {
                           )}
                         </td>
                         <td className="py-4 text-sm">
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                         </td>
                         <td className="py-4">
                           <div className="flex items-center justify-end gap-3">
                             <span className="text-sm">Active</span>
                             <label className="relative inline-flex items-center cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
                                 onChange={() => toast.promise(
                                   handleToggleActive(user.id, user.isActive),
                                   { loading: 'Updating...' }
-                                )} 
+                                )}
                                 checked={user.isActive}
                                 disabled={user.id === session?.user?.id}
                               />
@@ -333,9 +333,9 @@ export default function UsersManagement() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-slate-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} users
+                  Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} trong số{' '}
+                  {pagination.total} người dùng
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -345,7 +345,7 @@ export default function UsersManagement() {
                     disabled={pagination.page === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -353,7 +353,7 @@ export default function UsersManagement() {
                     onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Next
+                    Tiếp
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>

@@ -6,6 +6,8 @@ import {
   storeVoucherIncludeConfig,
 } from "../route";
 
+export const dynamic = 'force-dynamic';
+
 function determineVoucherState(voucher) {
   const now = new Date();
   if (voucher.start_date > now) return "upcoming";
@@ -265,60 +267,60 @@ export async function PUT(request, { params }) {
 
     const body = await request.json();
     const updateData = {};
-    
+
     const allowedFields = allowedFieldsByState[state] || new Set();
 
     // Build updateData from allowed fields
     for (const field of allowedFields) {
-        if (body[field] !== undefined) {
-            switch(field) {
-                case 'name':
-                    updateData.name = body.name;
-                    break;
-                case 'description':
-                    updateData.description = body.description;
-                    break;
-                case 'voucher_code':
-                  updateData.voucher_code = body.voucher_code?.trim() || null;
-                    break;
-                case 'discount_type':
-                    updateData.discount_type = body.discount_type;
-                    break;
-                case 'discount_value':
-                    updateData.discount_value = Number(body.discount_value);
-                    break;
-                case 'max_discount_amount':
-                    updateData.max_discount_amount = Number(body.max_discount_amount);
-                    break;
-                case 'min_order_value':
-                    updateData.min_order_value = Number(body.min_order_value);
-                    break;
-                case 'start_date':
-                    updateData.start_date = new Date(body.start_date);
-                    break;
-                case 'end_date':
-                    updateData.end_date = new Date(body.end_date);
-                    break;
-                case 'total_usage_limit':
-                    updateData.total_usage_limit = Number(body.total_usage_limit);
-                    break;
-                case 'user_usage_limit':
-                    updateData.user_usage_limit = Number(body.user_usage_limit);
-                    break;
-                case 'status':
-                    updateData.status = body.status;
-                    break;
-                case 'applicableProductIds':
-                    const productIds = sanitizeIdArray(body.applicableProductIds);
-                    if (productIds) {
-                        await ensureProductsBelongToStore(productIds, storeId);
-                        updateData.applicableProducts = {
-                            set: productIds.map((id) => ({ id })),
-                        };
-                    }
-                    break;
+      if (body[field] !== undefined) {
+        switch (field) {
+          case 'name':
+            updateData.name = body.name;
+            break;
+          case 'description':
+            updateData.description = body.description;
+            break;
+          case 'voucher_code':
+            updateData.voucher_code = body.voucher_code?.trim() || null;
+            break;
+          case 'discount_type':
+            updateData.discount_type = body.discount_type;
+            break;
+          case 'discount_value':
+            updateData.discount_value = Number(body.discount_value);
+            break;
+          case 'max_discount_amount':
+            updateData.max_discount_amount = Number(body.max_discount_amount);
+            break;
+          case 'min_order_value':
+            updateData.min_order_value = Number(body.min_order_value);
+            break;
+          case 'start_date':
+            updateData.start_date = new Date(body.start_date);
+            break;
+          case 'end_date':
+            updateData.end_date = new Date(body.end_date);
+            break;
+          case 'total_usage_limit':
+            updateData.total_usage_limit = Number(body.total_usage_limit);
+            break;
+          case 'user_usage_limit':
+            updateData.user_usage_limit = Number(body.user_usage_limit);
+            break;
+          case 'status':
+            updateData.status = body.status;
+            break;
+          case 'applicableProductIds':
+            const productIds = sanitizeIdArray(body.applicableProductIds);
+            if (productIds) {
+              await ensureProductsBelongToStore(productIds, storeId);
+              updateData.applicableProducts = {
+                set: productIds.map((id) => ({ id })),
+              };
             }
+            break;
         }
+      }
     }
 
     if (Object.keys(updateData).length === 0) {

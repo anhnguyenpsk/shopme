@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
@@ -33,14 +35,14 @@ export async function POST(request) {
     // Generate unique filename
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
+
     const ext = file.name.split('.').pop();
     const filename = `brand-${Date.now()}.${ext}`;
     const uploadDir = join(process.cwd(), 'public', 'uploads', 'brands');
-    
+
     // Create directory if it doesn't exist
     await mkdir(uploadDir, { recursive: true });
-    
+
     const filepath = join(uploadDir, filename);
 
     // Write file

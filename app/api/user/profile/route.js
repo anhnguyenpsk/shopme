@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch current user profile data
 export async function GET() {
@@ -59,7 +61,7 @@ export async function PATCH(request) {
 
     // Build update data
     const updateData = {};
-    
+
     if (name !== undefined) {
       if (!name || name.trim().length < 2 || name.trim().length > 50) {
         return NextResponse.json({ error: 'Name must be between 2 and 50 characters' }, { status: 400 });

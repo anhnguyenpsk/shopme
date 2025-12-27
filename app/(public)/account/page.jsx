@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import OrderItem from "@/components/OrderItem";
-import PageTitle from "@/components/PageTitle";
+import OrderItem from "@/components/checkout/OrderItem";
+import PageTitle from "@/components/shared/PageTitle";
 import VoucherWallet from "@/components/vouchers/VoucherWallet";
 
 export default function AccountPage() {
@@ -99,13 +99,13 @@ export default function AccountPage() {
     if (file) {
       // Check file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size must be less than 2MB");
+        toast.error("Kích thước ảnh phải nhỏ hơn 2MB");
         return;
       }
 
       // Check file type
       if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
+        toast.error("Vui lòng chọn tệp hình ảnh");
         return;
       }
 
@@ -138,6 +138,8 @@ export default function AccountPage() {
       if (res.ok) {
         const data = await res.json();
         setAddresses(Array.isArray(data) ? data : []);
+      } else {
+        console.error("Failed to fetch addresses, status:", res.status);
       }
     } catch (error) {
       console.error("Failed to fetch addresses:", error);
@@ -164,7 +166,7 @@ export default function AccountPage() {
 
         if (!uploadRes.ok) {
           const error = await uploadRes.json();
-          throw new Error(error.error || 'Failed to upload image');
+          throw new Error(error.error || 'Tải ảnh lên thất bại');
         }
 
         const uploadData = await uploadRes.json();
@@ -184,16 +186,16 @@ export default function AccountPage() {
       });
 
       if (res.ok) {
-        toast.success("Profile updated successfully!");
+        toast.success("Cập nhật hồ sơ thành công!");
         setImageFile(null);
         // Refresh profile to get updated data
         fetchProfile();
       } else {
         const error = await res.json();
-        toast.error(error.error || "Failed to update profile");
+        toast.error(error.error || "Cập nhật hồ sơ thất bại");
       }
     } catch (error) {
-      toast.error(error.message || "An error occurred");
+      toast.error(error.message || "Đã xảy ra lỗi");
       console.error("Profile update error:", error);
     } finally {
       setIsLoading(false);
@@ -218,7 +220,7 @@ export default function AccountPage() {
 
       if (res.ok) {
         toast.success(
-          editingAddress ? "Address updated successfully!" : "Address added successfully!"
+          editingAddress ? "Cập nhật địa chỉ thành công!" : "Thêm địa chỉ thành công!"
         );
         setShowAddressForm(false);
         setEditingAddress(null);
@@ -233,17 +235,17 @@ export default function AccountPage() {
         fetchAddresses();
       } else {
         const error = await res.json();
-        toast.error(error.error || "Failed to save address");
+        toast.error(error.error || "Lưu địa chỉ thất bại");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Đã xảy ra lỗi");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
+    if (!confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
 
     try {
       const res = await fetch(`/api/addresses/${id}`, {
@@ -251,10 +253,10 @@ export default function AccountPage() {
       });
 
       if (res.ok) {
-        toast.success("Address deleted successfully!");
+        toast.success("Xóa địa chỉ thành công!");
         fetchAddresses();
       } else {
-        toast.error("Failed to delete address");
+        toast.error("Xóa địa chỉ thất bại");
       }
     } catch (error) {
       toast.error("An error occurred");
@@ -289,50 +291,46 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Account</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Tài khoản của tôi</h1>
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab("profile")}
-              className={`${
-                activeTab === "profile"
-                  ? "border-green-500 text-green-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              className={`${activeTab === "profile"
+                ? "border-green-500 text-green-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              My Profile
+              Hồ sơ
             </button>
             <button
               onClick={() => setActiveTab("purchase")}
-              className={`${
-                activeTab === "purchase"
-                  ? "border-green-500 text-green-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              className={`${activeTab === "purchase"
+                ? "border-green-500 text-green-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              My Purchase
+              Đơn mua
             </button>
             <button
               onClick={() => setActiveTab("addresses")}
-              className={`${
-                activeTab === "addresses"
-                  ? "border-green-500 text-green-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              className={`${activeTab === "addresses"
+                ? "border-green-500 text-green-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              My Addresses
+              Địa chỉ
             </button>
             <button
               onClick={() => setActiveTab("vouchers")}
-              className={`${
-                activeTab === "vouchers"
-                  ? "border-green-500 text-green-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              className={`${activeTab === "vouchers"
+                ? "border-green-500 text-green-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              My Vouchers
+              Kho Voucher
             </button>
           </nav>
         </div>
@@ -343,7 +341,7 @@ export default function AccountPage() {
           {activeTab === "profile" && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Personal Information
+                Thông tin cá nhân
               </h2>
               <form onSubmit={handleProfileUpdate} className="space-y-6">
                 {/* Profile Image */}
@@ -378,7 +376,7 @@ export default function AccountPage() {
                   </div>
                   <div className="flex-1">
                     <Label htmlFor="profileImage" className="block mb-2">
-                      Profile Picture
+                      Ảnh đại diện
                     </Label>
                     <Input
                       id="profileImage"
@@ -388,14 +386,14 @@ export default function AccountPage() {
                       className="cursor-pointer"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Recommended: Square image, max 2MB (JPG, PNG, GIF)
+                      Khuyến nghị: Ảnh vuông, tối đa 2MB (JPG, PNG, GIF)
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name">Họ tên</Label>
                     <Input
                       id="name"
                       type="text"
@@ -417,12 +415,12 @@ export default function AccountPage() {
                       className="bg-gray-100"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Email cannot be changed
+                      Email không thể thay đổi
                     </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">Số điện thoại</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -430,12 +428,12 @@ export default function AccountPage() {
                       onChange={(e) =>
                         setProfile({ ...profile, phone: e.target.value })
                       }
-                      placeholder="0912345678 or +84912345678"
+                      placeholder="0912345678 hoặc +84912345678"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="gender">Gender</Label>
+                    <Label htmlFor="gender">Giới tính</Label>
                     <select
                       id="gender"
                       value={profile.gender}
@@ -444,15 +442,15 @@ export default function AccountPage() {
                       }
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
+                      <option value="">Chọn giới tính</option>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
                     </select>
                   </div>
 
                   <div>
-                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Label htmlFor="dateOfBirth">Ngày sinh</Label>
                     <Input
                       id="dateOfBirth"
                       type="date"
@@ -467,7 +465,7 @@ export default function AccountPage() {
 
                 <div className="flex justify-end">
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? "Saving..." : "Save Changes"}
+                    {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
                   </Button>
                 </div>
               </form>
@@ -478,7 +476,7 @@ export default function AccountPage() {
           {activeTab === "purchase" && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                My Orders
+                Đơn hàng của tôi
               </h2>
               {orders.length > 0 ? (
                 <div className="space-y-4">
@@ -488,7 +486,7 @@ export default function AccountPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">You have no orders yet</p>
+                  <p className="text-gray-500">Bạn chưa có đơn hàng nào</p>
                 </div>
               )}
             </div>
@@ -499,7 +497,7 @@ export default function AccountPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  My Addresses
+                  Địa chỉ của tôi
                 </h2>
                 <Button
                   onClick={() => {
@@ -515,19 +513,19 @@ export default function AccountPage() {
                     setShowAddressForm(true);
                   }}
                 >
-                  Add New Address
+                  Thêm địa chỉ mới
                 </Button>
               </div>
 
               {showAddressForm && (
                 <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <h3 className="text-lg font-medium mb-4">
-                    {editingAddress ? "Edit Address" : "New Address"}
+                    {editingAddress ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
                   </h3>
                   <form onSubmit={handleAddressSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="addressName">Name</Label>
+                        <Label htmlFor="addressName">Tên</Label>
                         <Input
                           id="addressName"
                           type="text"
@@ -540,7 +538,7 @@ export default function AccountPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="addressPhone">Phone Number</Label>
+                        <Label htmlFor="addressPhone">Số điện thoại</Label>
                         <Input
                           id="addressPhone"
                           type="tel"
@@ -553,7 +551,7 @@ export default function AccountPage() {
                       </div>
 
                       <div className="md:col-span-2">
-                        <Label htmlFor="street">Street Address</Label>
+                        <Label htmlFor="street">Địa chỉ (Số nhà, đường...)</Label>
                         <Input
                           id="street"
                           type="text"
@@ -566,7 +564,7 @@ export default function AccountPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="city">City</Label>
+                        <Label htmlFor="city">Thành phố</Label>
                         <Input
                           id="city"
                           type="text"
@@ -579,7 +577,7 @@ export default function AccountPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="state">State/Province</Label>
+                        <Label htmlFor="state">Tỉnh/Thành phố</Label>
                         <Input
                           id="state"
                           type="text"
@@ -592,7 +590,7 @@ export default function AccountPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="country">Country</Label>
+                        <Label htmlFor="country">Quốc gia</Label>
                         <Input
                           id="country"
                           type="text"
@@ -614,10 +612,10 @@ export default function AccountPage() {
                           setEditingAddress(null);
                         }}
                       >
-                        Cancel
+                        Hủy
                       </Button>
                       <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Saving..." : "Save Address"}
+                        {isLoading ? "Đang lưu..." : "Lưu địa chỉ"}
                       </Button>
                     </div>
                   </form>
@@ -640,13 +638,13 @@ export default function AccountPage() {
                             onClick={() => handleEditAddress(address)}
                             className="text-sm text-blue-600 hover:text-blue-800"
                           >
-                            Edit
+                            Sửa
                           </button>
                           <button
                             onClick={() => handleDeleteAddress(address.id)}
                             className="text-sm text-red-600 hover:text-red-800"
                           >
-                            Delete
+                            Xóa
                           </button>
                         </div>
                       </div>
@@ -663,7 +661,7 @@ export default function AccountPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No addresses added yet</p>
+                  <p className="text-gray-500">Chưa có địa chỉ nào được thêm</p>
                 </div>
               )}
             </div>

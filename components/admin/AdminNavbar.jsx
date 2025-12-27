@@ -46,7 +46,7 @@ const AdminNavbar = () => {
                             aria-haspopup="menu"
                             aria-expanded={open}
                         >
-                            Hi, {displayName}
+                            Xin chào, {displayName}
                         </button>
                         {open && (
                             <div
@@ -58,13 +58,13 @@ const AdminNavbar = () => {
                                     className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                                     role="menuitem"
                                 >
-                                    Logout
+                                    Đăng xuất
                                 </button>
                             </div>
                         )}
                     </div>
                 ) : (
-                    <p>Hi, Admin</p>
+                    <p>Xin chào, Admin</p>
                 )}
             </div>
         </div>

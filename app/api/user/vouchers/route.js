@@ -5,6 +5,8 @@ import {
   isHttpError,
 } from "@/lib/auth/guards";
 
+export const dynamic = 'force-dynamic';
+
 function includeCampaign() {
   return {
     voucherCampaign: {
@@ -23,8 +25,8 @@ function normalizeVoucherCampaign(voucher) {
     campaign.end_date < now
       ? "expired"
       : campaign.start_date > now
-      ? "upcoming"
-      : "ongoing";
+        ? "upcoming"
+        : "ongoing";
 
   return {
     ...voucher,
@@ -64,6 +66,7 @@ export async function POST(request) {
     const campaignId = body?.voucher_campaign_id;
 
     if (!campaignId || typeof campaignId !== "string") {
+      console.error("Voucher POST error: Missing or invalid campaignId", campaignId);
       return NextResponse.json(
         { error: "voucher_campaign_id is required" },
         { status: 400 }
@@ -75,18 +78,16 @@ export async function POST(request) {
     });
 
     if (!campaign) {
+      console.error("Voucher POST error: Campaign not found", campaignId);
       return NextResponse.json({ error: "Voucher campaign not found" }, { status: 404 });
     }
 
     const now = new Date();
-    if (campaign.start_date > now) {
-      return NextResponse.json(
-        { error: "Voucher campaign has not started yet" },
-        { status: 400 }
-      );
-    }
+    // Allow pre-collection of upcoming vouchers (Option 2)
+    // if (campaign.start_date > now) { ... } -> Removed
 
     if (campaign.end_date < now) {
+      console.error("Voucher POST error: Campaign expired", campaign.end_date);
       return NextResponse.json(
         { error: "Voucher campaign has expired" },
         { status: 400 }
@@ -94,6 +95,7 @@ export async function POST(request) {
     }
 
     if (campaign.status && campaign.status.toUpperCase() !== "ACTIVE") {
+      console.error("Voucher POST error: Campaign inactive", campaign.status);
       return NextResponse.json(
         { error: "Voucher campaign is not active" },
         { status: 400 }
@@ -137,6 +139,7 @@ export async function POST(request) {
       return NextResponse.json({ voucher: normalizeVoucherCampaign(voucher) }, { status: 201 });
     } catch (transactionError) {
       if (transactionError.status) {
+        console.error("Voucher POST transaction error:", transactionError.message);
         return NextResponse.json(
           { error: transactionError.message },
           { status: transactionError.status }
@@ -150,6 +153,7 @@ export async function POST(request) {
     }
 
     if (error.code === "P2002") {
+      console.error("Voucher POST error: P2002 Unique constraint (Already collected)");
       return NextResponse.json(
         { error: "Voucher already collected" },
         { status: 400 }
@@ -163,7 +167,3 @@ export async function POST(request) {
     );
   }
 }
-
-
-
-

@@ -13,16 +13,15 @@ const AdminSidebar = () => {
     const { data: session } = useSession()
 
     const sidebarLinks = [
-        { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
-        { name: 'Users', href: '/admin/users', icon: UsersIcon },
-        { name: 'Orders', href: '/admin/orders', icon: ShoppingBagIcon },
-        { name: 'Products', href: '/admin/products', icon: PackageIcon },
-        { name: 'Brands', href: '/admin/brands', icon: Tag },
-        { name: 'Categories', href: '/admin/categories', icon: Folder },
-        { name: 'Stores', href: '/admin/stores', icon: StoreIcon },
-        { name: 'Approve Store', href: '/admin/approve', icon: ShieldCheckIcon },
-        { name: 'Vouchers', href: '/admin/vouchers', icon: TicketPercentIcon  },
-        { name: 'Inngest Test', href: '/admin/inngest-test', icon: ZapIcon  },
+        { name: 'Tổng quan', href: '/admin/dashboard', icon: HomeIcon },
+        { name: 'Người dùng', href: '/admin/users', icon: UsersIcon },
+        { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingBagIcon },
+        { name: 'Sản phẩm', href: '/admin/products', icon: PackageIcon },
+        { name: 'Thương hiệu', href: '/admin/brands', icon: Tag },
+        { name: 'Danh mục', href: '/admin/categories', icon: Folder },
+        { name: 'Cửa hàng', href: '/admin/stores', icon: StoreIcon },
+        { name: 'Duyệt cửa hàng', href: '/admin/approve', icon: ShieldCheckIcon },
+        { name: 'Voucher', href: '/admin/vouchers', icon: TicketPercentIcon },
     ]
 
     return (
@@ -37,7 +36,7 @@ const AdminSidebar = () => {
                         </span>
                     </div>
                 )}
-                <p className="text-slate-700">Hi, {session?.user?.name || 'Admin'}</p>
+                <p className="text-slate-700">Xin chào, {session?.user?.name || 'Admin'}</p>
             </div>
 
             <div className="max-sm:mt-6">

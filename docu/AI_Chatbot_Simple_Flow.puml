@@ -1,0 +1,79 @@
+@startuml AI_Chatbot_Simple_Flow
+'=============================================================================
+' SHOPME AI CHATBOT - SIMPLE FLOW DIAGRAM
+' Lược đồ luồng đơn giản cho AI Chatbot
+'=============================================================================
+
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam roundCorner 5
+
+skinparam rectangle {
+    BackgroundColor white
+    BorderColor #333333
+    BorderThickness 1
+}
+
+skinparam database {
+    BackgroundColor white
+    BorderColor #333333
+}
+
+left to right direction
+
+'=============================================================================
+' LỚP 1: LỚP NHẬN VÀO & PHÂN LOẠI (Input & Classification)
+'=============================================================================
+note "Lớp 1: Lớp Nhận vào & Phân loại (Input & Classification)" as N1
+
+together {
+    rectangle "**INPUT**" as INPUT #333333;text:white
+    rectangle "AIService\n(ChatWindow)" as AIService
+    hexagon "IntentClassifier\n(extractIntent)" as IntentClassifier
+    hexagon "AILogicCore\n(runAgent)" as AILogicCore
+    database "ContextMemory\n(history)" as ContextMemory
+}
+
+INPUT -right-> AIService
+AIService -right-> IntentClassifier
+IntentClassifier -right-> AILogicCore
+AILogicCore -down-> ContextMemory
+
+'=============================================================================
+' LỚP 2: LỚP LẬP KẾ HOẠCH & TRUY XUẤT (Planning & Retrieval)  
+'=============================================================================
+note "Lớp 2: Lớp Lập kế hoạch & Truy xuất (Planning & Retrieval)" as N2
+
+together {
+    rectangle "QueryBroker\n(fetchProducts/\nfetchPromotions)" as QueryBroker
+    rectangle "PermissionManager\n(PUBLIC_FIELDS)" as PermissionManager
+    rectangle "StructuredRetriever\n(Prisma)" as StructuredRetriever
+    rectangle "DBConnector" as DBConnector
+    database "Neon\nPostgreSQL" as NeonDB
+}
+
+AILogicCore -right-> QueryBroker : "STATS Query"
+QueryBroker -right-> PermissionManager
+PermissionManager -right-> StructuredRetriever
+StructuredRetriever -right-> DBConnector
+DBConnector -right-> NeonDB : "Action Queries\nStats Queries"
+
+'=============================================================================
+' LỚP 3: LỚP TỔNG HỢP & XUẤT BẢN (Synthesis & Output)
+'=============================================================================
+note "Lớp 3: Lớp Tổng hợp & Xuất bản (Synthesis & Output)" as N3
+
+together {
+    rectangle "PermissionManager\n(Data Masking)" as PermissionManager2
+    rectangle "ResponseSynthesizer\n(generateResponse)" as ResponseSynthesizer
+    rectangle "AuditLogger\n(logChatInteraction)" as AuditLogger
+    rectangle "**OUTPUT**" as OUTPUT #333333;text:white
+}
+
+NeonDB -down-> PermissionManager2 : "Evidence sạch"
+PermissionManager2 -right-> ResponseSynthesizer
+ResponseSynthesizer -right-> AuditLogger : "Câu trả lời"
+AuditLogger -right-> OUTPUT : "Hoàn tất"
+
+@enduml

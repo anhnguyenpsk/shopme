@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import authSeller from "@/lib/authSeller";
 import prisma from "@/lib/prisma";
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch all products for the logged-in store owner
 export async function GET() {
@@ -23,10 +25,39 @@ export async function GET() {
 
         const products = await prisma.product.findMany({
             where: { storeId: store.id },
+            include: {
+                variants: {
+                    select: { quantity: true, price: true }
+                }
+            },
             orderBy: { createdAt: 'desc' },
         });
 
-        return NextResponse.json(products);
+        const productsWithDetails = products.map(product => {
+            const result = { ...product };
+
+            if (product.hasVariations && product.variants.length > 0) {
+                // Calculate total quantity
+                const totalVariantQuantity = product.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+                result.quantity = totalVariantQuantity;
+
+                // Calculate price range
+                const prices = product.variants.map(v => v.price);
+                const minPrice = Math.min(...prices);
+                const maxPrice = Math.max(...prices);
+
+                if (minPrice !== maxPrice) {
+                    result.displayPrice = `${minPrice}-${maxPrice}`;
+                    result.minPrice = minPrice;
+                    result.maxPrice = maxPrice;
+                } else {
+                    result.price = minPrice; // If all variants have same price, use that
+                }
+            }
+            return result;
+        });
+
+        return NextResponse.json(productsWithDetails);
     } catch (error) {
         console.error('Error fetching products:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -35,62 +66,62 @@ export async function GET() {
 
 // POST /api/store/product - add a new product (multipart/form-data expected)
 export async function POST(request) {
-  try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-    const storeId = await authSeller(userId);
+    try {
+        const session = await getServerSession(authOptions);
+        const userId = session?.user?.id;
+        const storeId = await authSeller(userId);
 
-    const formData = await request.formData();
+        const formData = await request.formData();
 
-    // Extract expected fields
-    const name = formData.get("name");
-    const description = formData.get("description");
-    const mrp = formData.get("mrp");
-    const price = formData.get("price");
-    const images = formData.getAll("images"); // File objects
-    const categoryId = formData.get("categoryId") || null;
-    const brandId = formData.get("brandId") || null;
+        // Extract expected fields
+        const name = formData.get("name");
+        const description = formData.get("description");
+        const mrp = formData.get("mrp");
+        const price = formData.get("price");
+        const images = formData.getAll("images"); // File objects
+        const categoryId = formData.get("categoryId") || null;
+        const brandId = formData.get("brandId") || null;
 
-    // Basic validation
-    if (!name || !description || !mrp || !price) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        // Basic validation
+        if (!name || !description || !mrp || !price) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        // TODO: Handle file uploads here.
+        // Example placeholder:
+        // const imageUrls = await uploadImagesToYourService(images);
+        const imageUrls = [];
+
+        // Optional: validate categoryId/brandId exist
+        if (categoryId) {
+            const cat = await prisma.category.findUnique({ where: { id: categoryId } });
+            if (!cat) return NextResponse.json({ error: "Invalid categoryId" }, { status: 400 });
+        }
+        if (brandId) {
+            const br = await prisma.brand.findUnique({ where: { id: brandId } });
+            if (!br) return NextResponse.json({ error: "Invalid brandId" }, { status: 400 });
+        }
+
+        await prisma.product.create({
+            data: {
+                name,
+                description,
+                mrp: Number(mrp),
+                price: Number(price),
+                images: imageUrls,
+                storeId,
+                categoryId: categoryId || undefined,
+                brandId: brandId || undefined,
+            },
+        });
+
+        return NextResponse.json({ message: "Product created" }, { status: 201 });
+    } catch (error) {
+        const message = error?.message || "Failed to create product";
+        const status = message === "Unauthorized" ? 401 : 500;
+        console.error("PRODUCT_CREATE_ERROR", error);
+        return NextResponse.json({ error: message }, { status });
     }
-
-    // TODO: Handle file uploads here.
-    // Example placeholder:
-    // const imageUrls = await uploadImagesToYourService(images);
-    const imageUrls = [];
-
-    // Optional: validate categoryId/brandId exist
-    if (categoryId) {
-      const cat = await prisma.category.findUnique({ where: { id: categoryId } });
-      if (!cat) return NextResponse.json({ error: "Invalid categoryId" }, { status: 400 });
-    }
-    if (brandId) {
-      const br = await prisma.brand.findUnique({ where: { id: brandId } });
-      if (!br) return NextResponse.json({ error: "Invalid brandId" }, { status: 400 });
-    }
-
-    await prisma.product.create({
-      data: {
-        name,
-        description,
-        mrp: Number(mrp),
-        price: Number(price),
-        images: imageUrls,
-        storeId,
-        categoryId: categoryId || undefined,
-        brandId: brandId || undefined,
-      },
-    });
-
-    return NextResponse.json({ message: "Product created" }, { status: 201 });
-  } catch (error) {
-    const message = error?.message || "Failed to create product";
-    const status = message === "Unauthorized" ? 401 : 500;
-    console.error("PRODUCT_CREATE_ERROR", error);
-    return NextResponse.json({ error: message }, { status });
-  }
 }
 
 // PATCH - Update a product's details (e.g., isActive status or quantity)

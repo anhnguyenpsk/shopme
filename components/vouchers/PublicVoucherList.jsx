@@ -26,10 +26,10 @@ const PublicVoucher = ({ voucher, onCollect, collectedVouchers }) => {
           <p className="font-semibold text-slate-800 text-sm">{voucher.description || voucher.name}</p>
           <p className="text-xs text-slate-500">
             {voucher.discount_type === 'PERCENTAGE'
-              ? `Save ${voucher.discount_value}%, max ${formatVND(voucher.max_discount_amount)}`
-              : `Save ${formatVND(voucher.discount_value)}`}
+              ? `Giảm ${voucher.discount_value}%, tối đa ${formatVND(voucher.max_discount_amount)}`
+              : `Giảm ${formatVND(voucher.discount_value)}`}
           </p>
-          <p className="text-xs text-slate-500">Min. order: {formatVND(voucher.min_order_value)}</p>
+          <p className="text-xs text-slate-500">Đơn tối thiểu: {formatVND(voucher.min_order_value)}</p>
         </div>
       </div>
       <Button
@@ -38,14 +38,14 @@ const PublicVoucher = ({ voucher, onCollect, collectedVouchers }) => {
         onClick={handleCollect}
         disabled={isCollected || isCollecting}
       >
-        {isCollecting ? 'Saving...' : (isCollected ? 'Saved' : 'Save')}
+        {isCollecting ? 'Đang lưu...' : (isCollected ? 'Đã lưu' : 'Lưu')}
       </Button>
     </div>
   );
 };
 
 export default function PublicVoucherList({ storeId, productId }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [vouchers, setVouchers] = useState([]);
   const [collectedVouchers, setCollectedVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,11 +54,16 @@ export default function PublicVoucherList({ storeId, productId }) {
     const fetchVouchers = async () => {
       try {
         const params = new URLSearchParams();
-        if (storeId) params.append('storeId', storeId);
-        if (productId) params.append('productId', productId);
+        // API requires either storeId OR productId, not both
+        // Prefer productId as the API can look up the store from it
+        if (productId) {
+          params.append('productId', productId);
+        } else if (storeId) {
+          params.append('storeId', storeId);
+        }
 
         const response = await axios.get(`/api/vouchers/public?${params.toString()}`);
-        setVouchers(response.data.data || []);
+        setVouchers(response.data.vouchers || []);
       } catch (error) {
         console.error("Failed to fetch public vouchers", error);
       } finally {
@@ -71,34 +76,39 @@ export default function PublicVoucherList({ storeId, productId }) {
 
   useEffect(() => {
     const fetchUserVouchers = async () => {
-      if (!session) return;
+      if (status !== 'authenticated' || !session) return;
+
       try {
         const response = await axios.get('/api/user/vouchers');
-        const userVoucherIds = response.data.data.map(uv => uv.voucher_campaign_id);
+        const userVoucherIds = (response.data.vouchers || []).map(uv => uv.voucher_campaign_id);
         setCollectedVouchers(userVoucherIds);
       } catch (error) {
+        if (error.response && error.response.status === 401) {
+          console.log("User session invalid or expired during voucher fetch");
+          return;
+        }
         console.error("Failed to fetch user vouchers", error);
       }
     };
     fetchUserVouchers();
-  }, [session]);
+  }, [session, status]);
 
   const handleCollectVoucher = async (voucherCampaignId) => {
     if (!session) {
-      toast.error('You need to log in to collect vouchers.');
+      toast.error('Bạn cần đăng nhập để lưu voucher.');
       return;
     }
     try {
       await axios.post('/api/user/vouchers', { voucher_campaign_id: voucherCampaignId });
-      toast.success('Voucher collected successfully!');
+      toast.success('Lưu voucher thành công!');
       setCollectedVouchers(prev => [...prev, voucherCampaignId]);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to collect voucher.');
+      toast.error(error.response?.data?.message || 'Lưu voucher thất bại.');
     }
   };
 
   if (loading) {
-    return <div className="text-center p-4">Loading vouchers...</div>;
+    return <div className="text-center p-4">Đang tải voucher...</div>;
   }
 
   if (vouchers.length === 0) {
@@ -107,16 +117,16 @@ export default function PublicVoucherList({ storeId, productId }) {
 
   return (
     <div className="max-w-7xl mx-auto mt-6">
-        <div className="space-y-3">
-            {vouchers.map(voucher => (
-                <PublicVoucher 
-                    key={voucher.id} 
-                    voucher={voucher} 
-                    onCollect={handleCollectVoucher}
-                    collectedVouchers={collectedVouchers}
-                />
-            ))}
-        </div>
+      <div className="space-y-3">
+        {vouchers.map(voucher => (
+          <PublicVoucher
+            key={voucher.id}
+            voucher={voucher}
+            onCollect={handleCollectVoucher}
+            collectedVouchers={collectedVouchers}
+          />
+        ))}
+      </div>
     </div>
   );
 }

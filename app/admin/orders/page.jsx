@@ -3,54 +3,55 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
-  Package, 
-  DollarSign, 
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  DollarSign,
   ShoppingCart,
   Eye
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { formatVND } from '@/lib/utils/currency';
+import { ORDER_STATUS_VI, PAYMENT_STATUS_VI } from '@/lib/translations';
 
 export default function OrdersManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, byStatus: {} });
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  
+
   // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [storeFilter, setStoreFilter] = useState('all');
   const [searchInput, setSearchInput] = useState('');
-  
+
   // Dialog state
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -71,13 +72,13 @@ export default function OrdersManagement() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
       if (storeFilter && storeFilter !== 'all') params.append('storeId', storeFilter);
 
       const response = await fetch(`/api/admin/orders?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setOrders(data.orders);
@@ -142,7 +143,7 @@ export default function OrdersManagement() {
   return (
     <div className="text-slate-500">
       <h1 className="text-2xl mb-6">
-        Orders <span className="text-slate-800 font-medium">Management</span>
+        Quản lý <span className="text-slate-800 font-medium">Đơn hàng</span>
       </h1>
 
       {/* Statistics Cards */}
@@ -151,7 +152,7 @@ export default function OrdersManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Total Revenue
+              Tổng doanh thu
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -162,7 +163,7 @@ export default function OrdersManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <ShoppingCart className="h-4 w-4" />
-              Total Orders
+              Tổng đơn hàng
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -171,7 +172,7 @@ export default function OrdersManagement() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Order Placed</CardTitle>
+            <CardTitle className="text-sm font-medium">Đã đặt hàng</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.byStatus?.ORDER_PLACED || 0}</div>
@@ -179,7 +180,7 @@ export default function OrdersManagement() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Processing</CardTitle>
+            <CardTitle className="text-sm font-medium">Đang xử lý</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.byStatus?.PROCESSING || 0}</div>
@@ -187,7 +188,7 @@ export default function OrdersManagement() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Delivered</CardTitle>
+            <CardTitle className="text-sm font-medium">Đã giao hàng</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.byStatus?.DELIVERED || 0}</div>
@@ -198,17 +199,17 @@ export default function OrdersManagement() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Search by Order ID or Customer</Label>
+              <Label htmlFor="search">Tìm theo Mã đơn hoặc Khách hàng</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search orders..."
+                  placeholder="Tìm kiếm đơn hàng..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
@@ -216,20 +217,20 @@ export default function OrdersManagement() {
               </div>
             </div>
             <div className="w-full md:w-48">
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">Lọc theo trạng thái</Label>
               <Select value={statusFilter} onValueChange={(value) => {
                 setStatusFilter(value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}>
                 <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="All Statuses" />
+                  <SelectValue placeholder="Tất cả trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="ORDER_PLACED">Order Placed</SelectItem>
-                  <SelectItem value="PROCESSING">Processing</SelectItem>
-                  <SelectItem value="SHIPPED">Shipped</SelectItem>
-                  <SelectItem value="DELIVERED">Delivered</SelectItem>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="ORDER_PLACED">{ORDER_STATUS_VI.ORDER_PLACED}</SelectItem>
+                  <SelectItem value="PROCESSING">{ORDER_STATUS_VI.PROCESSING}</SelectItem>
+                  <SelectItem value="SHIPPED">{ORDER_STATUS_VI.SHIPPED}</SelectItem>
+                  <SelectItem value="DELIVERED">{ORDER_STATUS_VI.DELIVERED}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -240,9 +241,9 @@ export default function OrdersManagement() {
       {/* Orders Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Orders</CardTitle>
+          <CardTitle>Tất cả đơn hàng</CardTitle>
           <CardDescription>
-            View and manage orders from all stores
+            Xem và quản lý đơn hàng từ tất cả cửa hàng
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -252,7 +253,7 @@ export default function OrdersManagement() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No orders found
+              Không tìm thấy đơn hàng nào
             </div>
           ) : (
             <>
@@ -260,14 +261,14 @@ export default function OrdersManagement() {
                 <table className="w-full">
                   <thead className="border-b">
                     <tr className="text-left">
-                      <th className="pb-3 font-medium">Order ID</th>
-                      <th className="pb-3 font-medium">Date</th>
-                      <th className="pb-3 font-medium">Customer</th>
-                      <th className="pb-3 font-medium">Store</th>
-                      <th className="pb-3 font-medium">Total</th>
-                      <th className="pb-3 font-medium">Status</th>
-                      <th className="pb-3 font-medium">Payment</th>
-                      <th className="pb-3 font-medium text-right">Actions</th>
+                      <th className="pb-3 font-medium">Mã đơn</th>
+                      <th className="pb-3 font-medium">Ngày đặt</th>
+                      <th className="pb-3 font-medium">Khách hàng</th>
+                      <th className="pb-3 font-medium">Cửa hàng</th>
+                      <th className="pb-3 font-medium">Tổng tiền</th>
+                      <th className="pb-3 font-medium">Trạng thái</th>
+                      <th className="pb-3 font-medium">Thanh toán</th>
+                      <th className="pb-3 font-medium text-right">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -277,7 +278,7 @@ export default function OrdersManagement() {
                           <span className="font-mono text-sm">{order.id.slice(0, 8)}...</span>
                         </td>
                         <td className="py-4 text-sm">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                         </td>
                         <td className="py-4">
                           <div className="text-sm">
@@ -307,12 +308,12 @@ export default function OrdersManagement() {
                         </td>
                         <td className="py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {order.status.replace('_', ' ')}
+                            {ORDER_STATUS_VI[order.status] || order.status}
                           </span>
                         </td>
                         <td className="py-4">
                           <Badge variant={order.isPaid ? 'default' : 'secondary'}>
-                            {order.isPaid ? 'Paid' : 'Unpaid'}
+                            {PAYMENT_STATUS_VI[order.isPaid]}
                           </Badge>
                         </td>
                         <td className="py-4">
@@ -323,7 +324,7 @@ export default function OrdersManagement() {
                               onClick={() => openDetailDialog(order)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              View
+                              Xem
                             </Button>
                           </div>
                         </td>
@@ -336,9 +337,9 @@ export default function OrdersManagement() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-slate-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} orders
+                  Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} trong số{' '}
+                  {pagination.total} đơn hàng
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -348,7 +349,7 @@ export default function OrdersManagement() {
                     disabled={pagination.page === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -356,7 +357,7 @@ export default function OrdersManagement() {
                     onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Next
+                    Sau
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -370,38 +371,38 @@ export default function OrdersManagement() {
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
+            <DialogTitle>Chi tiết đơn hàng</DialogTitle>
             <DialogDescription>
-              Order ID: {selectedOrder?.id}
+              Mã đơn: {selectedOrder?.id}
             </DialogDescription>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-4">
               {/* Customer Info */}
               <div>
-                <h3 className="font-semibold mb-2">Customer Information</h3>
+                <h3 className="font-semibold mb-2">Thông tin khách hàng</h3>
                 <div className="bg-slate-50 p-4 rounded-lg space-y-1 text-sm">
-                  <p><strong>Name:</strong> {selectedOrder.user.name || 'N/A'}</p>
+                  <p><strong>Tên:</strong> {selectedOrder.user.name || 'N/A'}</p>
                   <p><strong>Email:</strong> {selectedOrder.user.email}</p>
-                  <p><strong>Phone:</strong> {selectedOrder.user.phone || 'N/A'}</p>
+                  <p><strong>SĐT:</strong> {selectedOrder.user.phone || 'N/A'}</p>
                 </div>
               </div>
 
               {/* Store Info */}
               <div>
-                <h3 className="font-semibold mb-2">Store Information</h3>
+                <h3 className="font-semibold mb-2">Thông tin cửa hàng</h3>
                 <div className="bg-slate-50 p-4 rounded-lg space-y-1 text-sm">
-                  <p><strong>Name:</strong> {selectedOrder.store.name}</p>
+                  <p><strong>Tên:</strong> {selectedOrder.store.name}</p>
                   <p><strong>Username:</strong> @{selectedOrder.store.username}</p>
                 </div>
               </div>
 
               {/* Delivery Address */}
               <div>
-                <h3 className="font-semibold mb-2">Delivery Address</h3>
+                <h3 className="font-semibold mb-2">Địa chỉ giao hàng</h3>
                 <div className="bg-slate-50 p-4 rounded-lg space-y-1 text-sm">
-                  <p><strong>Name:</strong> {selectedOrder.address.name}</p>
-                  <p><strong>Phone:</strong> {selectedOrder.address.phone}</p>
+                  <p><strong>Tên:</strong> {selectedOrder.address.name}</p>
+                  <p><strong>SĐT:</strong> {selectedOrder.address.phone}</p>
                   <p>{selectedOrder.address.street}</p>
                   <p>{selectedOrder.address.city}, {selectedOrder.address.state}</p>
                   <p>{selectedOrder.address.country}</p>
@@ -410,7 +411,7 @@ export default function OrdersManagement() {
 
               {/* Order Items */}
               <div>
-                <h3 className="font-semibold mb-2">Order Items</h3>
+                <h3 className="font-semibold mb-2">Sản phẩm</h3>
                 <div className="space-y-3">
                   {selectedOrder.orderItems.map((item, index) => (
                     <div key={index} className="flex items-center gap-4 bg-slate-50 p-3 rounded-lg">
@@ -426,7 +427,7 @@ export default function OrdersManagement() {
                       <div className="flex-1">
                         <p className="font-medium">{item.product.name}</p>
                         <p className="text-sm text-slate-500">
-                          Quantity: {item.quantity} × {formatVND(item.price)}
+                          Số lượng: {item.quantity} × {formatVND(item.price)}
                         </p>
                       </div>
                       <div className="font-semibold">
@@ -439,27 +440,27 @@ export default function OrdersManagement() {
 
               {/* Order Summary */}
               <div>
-                <h3 className="font-semibold mb-2">Order Summary</h3>
+                <h3 className="font-semibold mb-2">Tổng kết đơn hàng</h3>
                 <div className="bg-slate-50 p-4 rounded-lg space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Status:</span>
+                    <span>Trạng thái:</span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
-                      {selectedOrder.status.replace('_', ' ')}
+                      {ORDER_STATUS_VI[selectedOrder.status] || selectedOrder.status}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Payment Method:</span>
+                    <span>Phương thức thanh toán:</span>
                     <span className="font-medium">{selectedOrder.paymentMethod}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Payment Status:</span>
+                    <span>Trạng thái thanh toán:</span>
                     <Badge variant={selectedOrder.isPaid ? 'default' : 'secondary'}>
-                      {selectedOrder.isPaid ? 'Paid' : 'Unpaid'}
+                      {PAYMENT_STATUS_VI[selectedOrder.isPaid]}
                     </Badge>
                   </div>
 
                   <div className="flex justify-between pt-2 border-t font-semibold text-base">
-                    <span>Total:</span>
+                    <span>Tổng cộng:</span>
                     <span>{formatVND(selectedOrder.total)}</span>
                   </div>
                 </div>

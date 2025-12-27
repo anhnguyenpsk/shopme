@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  const { update } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,32 +30,32 @@ export default function LoginPage() {
       if (result?.error) {
         toast.error(result.error);
       } else if (result?.ok) {
-        // Get the session to check user role
-        const session = await getSession();
+        // Force session update to get latest role
+        const session = await update();
 
         if (session?.user) {
           // Role-based routing
           switch (session.user.role) {
             case 'ADMIN':
-              toast.success("Welcome Admin!");
+              toast.success("Chào mừng quản trị viên!");
               router.push("/admin/dashboard");
               break;
             case 'STORE_OWNER':
-              toast.success("Welcome Store Owner!");
+              toast.success("Chào mừng chủ cửa hàng!");
               router.push("/store/dashboard");
               break;
             case 'CUSTOMER':
-              toast.success("Welcome back!");
+              toast.success("Chào mừng trở lại!");
               router.push("/");
               break;
             default:
-              toast.success("Login successful!");
+              toast.success("Đăng nhập thành công!");
               router.push("/");
           }
         }
       }
     } catch (error) {
-      toast.error("An error occurred during login");
+      toast.error("Đã xảy ra lỗi khi đăng nhập");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -63,25 +64,25 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="fixed top-4 left-4 z-50">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/">← Back to Home</Link>
-          </Button>
-        </div>
+      <div className="fixed top-4 left-4 z-50">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/">← Về Trang chủ</Link>
+        </Button>
+      </div>
 
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            Đăng nhập vào tài khoản
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your credentials to access ShopMe
+            Nhập thông tin xác thực để truy cập ShopMe
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Địa chỉ Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -90,12 +91,13 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 disabled={isLoading}
               />
             </div>
+
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 name="password"
@@ -104,7 +106,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="Nhập mật khẩu của bạn"
                 disabled={isLoading}
               />
             </div>
@@ -116,17 +118,26 @@ export default function LoginPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
+              Bạn chưa có tài khoản?{" "}
               <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign up
+                Đăng ký
               </a>
             </p>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-gray-600 hover:text-blue-600"
+            >
+              Quên mật khẩu?
+            </Link>
           </div>
         </form>
       </div>

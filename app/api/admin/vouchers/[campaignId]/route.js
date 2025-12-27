@@ -10,6 +10,8 @@ import {
   ADMIN_VOUCHER_TYPES,
 } from "../route";
 
+export const dynamic = 'force-dynamic';
+
 async function ensureAdminVoucher(campaignId) {
   if (!campaignId || typeof campaignId !== "string") {
     throw new Error("campaignId is required");

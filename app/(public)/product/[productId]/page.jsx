@@ -1,6 +1,6 @@
 'use client'
-import ProductDescription from "@/components/ProductDescription";
-import ProductDetails from "@/components/ProductDetails";
+import ProductDescription from "@/components/products/ProductDescription";
+import ProductDetails from "@/components/products/ProductDetails";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -13,15 +13,15 @@ export default function Product() {
     const products = useSelector(state => state.product.list);
 
     const fetchProduct = async () => {
-      try {
-        const response = await fetch(`/api/products/${productId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setProduct(data);
+        try {
+            const response = await fetch(`/api/products/${productId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setProduct(data);
+            }
+        } catch (error) {
+            console.error('Error fetching product:', error);
         }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      }
     };
 
     useEffect(() => {
@@ -29,8 +29,8 @@ export default function Product() {
             const productFromState = products.find((p) => p.id === productId);
             if (productFromState) {
                 setProduct(productFromState);
-                // If minimal product (no store relation), fetch full details
-                if (!productFromState.store) {
+                // If minimal product (no store relation or missing description), fetch full details
+                if (!productFromState.store || !productFromState.description) {
                     fetchProduct();
                 }
             } else {
@@ -46,7 +46,7 @@ export default function Product() {
 
                 {/* Breadcrums */}
                 <div className="  text-gray-600 text-sm mt-8 mb-5">
-                    Home / Products / {product?.category}
+                    Trang chủ / Sản phẩm / {product?.category}
                 </div>
 
                 {/* Vouchers */}

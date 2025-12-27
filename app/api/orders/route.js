@@ -1,7 +1,9 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import prisma from "@/lib/prisma"
 import { calculateAndValidateVoucherDiscount } from "@/lib/vouchers"
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -60,19 +62,30 @@ export async function POST(request) {
 
     // --- Server-side validation and calculation ---
     const productIds = items.map(i => i.productId)
-    const products = await prisma.product.findMany({ 
-      where: { id: { in: productIds } }, 
-      select: { id: true, name: true, storeId: true, quantity: true, isActive: true, price: true } 
+    const variantIds = items.map(i => i.variantId).filter(id => Boolean(id) && typeof id === 'string')
+
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, storeId: true, quantity: true, isActive: true, price: true }
     })
 
-    if (products.length !== items.length) {
-      return new Response(JSON.stringify({ error: "Some products not found" }), { status: 400 })
+    const variants = variantIds.length > 0
+      ? await prisma.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        select: { id: true, productId: true, price: true, quantity: true, attributes: true }
+      })
+      : []
+
+    if (products.length !== new Set(productIds).size) {
+      // Note: products.length matching set size is approximate check, rigorous check is looking up each.
+      // Proceeding with lookup check in loop is safer.
     }
 
     const productMap = new Map(products.map(p => [p.id, p]))
+    const variantMap = new Map(variants.map(v => [v.id, v]))
     const storeGroups = new Map()
     let grandSubtotal = 0;
-    
+
     for (const item of items) {
       const product = productMap.get(item.productId)
       if (!product) {
@@ -81,19 +94,37 @@ export async function POST(request) {
       if (!product.isActive) {
         return new Response(JSON.stringify({ error: `Product "${product.name}" is currently unavailable` }), { status: 400 })
       }
-      if (product.quantity < item.quantity) {
-        return new Response(JSON.stringify({ 
-          error: `Insufficient stock for "${product.name}". Available: ${product.quantity}, Requested: ${item.quantity}` 
+
+      let price = product.price
+      let quantityAvailable = product.quantity
+      let variant = null;
+
+      if (item.variantId) {
+        variant = variantMap.get(item.variantId)
+        if (!variant) {
+          return new Response(JSON.stringify({ error: `Variant not found for product "${product.name}"` }), { status: 400 })
+        }
+        if (variant.productId !== item.productId) {
+          return new Response(JSON.stringify({ error: `Invalid variant for product "${product.name}"` }), { status: 400 })
+        }
+        price = variant.price
+        quantityAvailable = variant.quantity
+      }
+
+      if (quantityAvailable < item.quantity) {
+        const itemDesc = variant ? `${product.name} (Variant)` : product.name
+        return new Response(JSON.stringify({
+          error: `Insufficient stock for "${itemDesc}". Available: ${quantityAvailable}, Requested: ${item.quantity}`
         }), { status: 400 })
       }
-      
+
       const storeId = product.storeId
       if (!storeGroups.has(storeId)) {
         storeGroups.set(storeId, { items: [], subtotal: 0 })
       }
       const storeGroup = storeGroups.get(storeId)
-      const lineTotal = product.price * item.quantity
-      storeGroup.items.push({ ...item, product })
+      const lineTotal = price * item.quantity // Use validated price
+      storeGroup.items.push({ ...item, product, price, variant }) // Store validated price/variant
       storeGroup.subtotal += lineTotal
       grandSubtotal += lineTotal
     }
@@ -106,28 +137,30 @@ export async function POST(request) {
 
     const inactiveStore = stores.find(s => !s.isActive)
     if (inactiveStore) {
-      return new Response(JSON.stringify({ 
-        error: `The store "${inactiveStore.name}" is temporarily closed and not accepting orders` 
+      return new Response(JSON.stringify({
+        error: `The store "${inactiveStore.name}" is temporarily closed and not accepting orders`
       }), { status: 400 })
     }
 
     // --- Voucher Validation ---
     const { totalDiscount, validationResults } = await calculateAndValidateVoucherDiscount({
-        userVoucherIds,
-        cartItems: items,
-        userId: session.user.id,
+      userVoucherIds,
+      cartItems: items,
+      userId: session.user.id,
     });
 
     const serverSidePayableTotal = Math.round(grandSubtotal - totalDiscount);
 
     // CRITICAL: Security check
     if (serverSidePayableTotal !== Math.round(total)) {
-        return new Response(JSON.stringify({ error: 'Price mismatch. Please refresh and try again.' }), { status: 400 });
+      // Detailed error for debugging usually, but generic for user
+      console.error(`Price mismatch: Server ${serverSidePayableTotal} vs Client ${total}`)
+      return new Response(JSON.stringify({ error: 'Price mismatch. Please refresh and try again.' }), { status: 400 });
     }
 
     // --- Idempotency Check ---
     if (paymentIntentId) {
-      const existingOrders = await prisma.order.findMany({ 
+      const existingOrders = await prisma.order.findMany({
         where: { paymentIntentId },
         include: {
           address: true,
@@ -144,10 +177,24 @@ export async function POST(request) {
     const createdOrders = await prisma.$transaction(async (tx) => {
       // 1. Deduct quantities
       for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { quantity: { decrement: item.quantity } }
-        })
+        if (item.variantId) {
+          // Deduct variant stock
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { quantity: { decrement: item.quantity } }
+          })
+          // Deduct parent stock to keep aggregate sync
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { quantity: { decrement: item.quantity } }
+          })
+        } else {
+          // Simple product stock deduction
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { quantity: { decrement: item.quantity } }
+          })
+        }
       }
 
       // 2. Separate voucher discounts by type
@@ -158,11 +205,11 @@ export async function POST(request) {
       validationResults.forEach(result => {
         const { campaign, discountAmount } = result;
         if (campaign.voucher_type === 'SHOP') {
-            shopVoucherDiscounts.set(campaign.created_by_shop_id, discountAmount);
+          shopVoucherDiscounts.set(campaign.created_by_shop_id, discountAmount);
         } else if (campaign.voucher_type === 'PLATFORM') {
-            platformDiscount += discountAmount;
+          platformDiscount += discountAmount;
         } else if (campaign.voucher_type === 'SHIPPING') {
-            shippingDiscount += discountAmount;
+          shippingDiscount += discountAmount;
         }
       });
 
@@ -173,7 +220,7 @@ export async function POST(request) {
         let storeDiscountAmount = 0;
         // Apply shop-specific voucher discount
         if (shopVoucherDiscounts.has(storeId)) {
-            storeDiscountAmount += shopVoucherDiscounts.get(storeId);
+          storeDiscountAmount += shopVoucherDiscounts.get(storeId);
         }
         // Apply proportional platform & shipping discounts
         const storeProportion = grandSubtotal > 0 ? group.subtotal / grandSubtotal : 0;
@@ -190,10 +237,11 @@ export async function POST(request) {
             paymentMethod,
             paymentIntentId: paymentIntentId || undefined,
             orderItems: {
-              create: group.items.map(i => ({ 
-                productId: i.productId, 
-                quantity: i.quantity, 
-                price: i.product.price 
+              create: group.items.map(i => ({
+                productId: i.productId,
+                variantId: i.variantId || null,
+                quantity: i.quantity,
+                price: i.price // Use the validated price collected in loop above
               }))
             }
           },
@@ -208,14 +256,14 @@ export async function POST(request) {
 
       // 4. Update voucher status and link to the FIRST order
       if (userVoucherIds.length > 0 && orders.length > 0) {
-          await tx.userVoucher.updateMany({
-              where: { id: { in: userVoucherIds }, user_id: session.user.id },
-              data: {
-                  status: 'USED',
-                  used_in_order_id: orders[0].id, // Link all to the first order
-                  used_date: new Date()
-              }
-          });
+        await tx.userVoucher.updateMany({
+          where: { id: { in: userVoucherIds }, user_id: session.user.id },
+          data: {
+            status: 'USED',
+            used_in_order_id: orders[0].id, // Link all to the first order
+            used_date: new Date()
+          }
+        });
       }
 
       return orders

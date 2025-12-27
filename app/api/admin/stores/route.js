@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
 import { inngest, Events } from '@/lib/inngest';
+
+export const dynamic = 'force-dynamic';
 
 // GET - Fetch stores for admin review, with optional status filter
 export async function GET(request) {
@@ -51,7 +53,7 @@ export async function GET(request) {
 export async function PUT(request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }

@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
@@ -34,7 +36,7 @@ export async function POST(request) {
     // Generate unique filename
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
+
     const ext = file.name.split('.').pop();
     const filename = `${session.user.id}-${Date.now()}.${ext}`;
     const filepath = join(process.cwd(), 'public', 'uploads', 'profiles', filename);
@@ -57,9 +59,9 @@ export async function POST(request) {
 
     const publicPath = `/uploads/profiles/${filename}`;
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      imagePath: publicPath 
+      imagePath: publicPath
     });
   } catch (error) {
     console.error('Upload error:', error);

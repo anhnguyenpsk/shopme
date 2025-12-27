@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  shopme:
+    image: your-username/shopme:latest
+    container_name: shopme-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - PORT=3000

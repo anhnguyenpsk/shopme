@@ -1,7 +1,7 @@
 'use client'
-import PageTitle from "@/components/PageTitle"
+import PageTitle from "@/components/shared/PageTitle"
 import { useEffect, useState } from "react";
-import OrderItem from "@/components/OrderItem";
+import OrderItem from "@/components/checkout/OrderItem";
 
 export default function Orders() {
 
@@ -27,7 +27,7 @@ export default function Orders() {
             {orders.length > 0 ? (
                 (
                     <div className="my-20 max-w-7xl mx-auto">
-                        <PageTitle heading="My Orders" text={`Showing total ${orders.length} orders`} linkText={'Go to home'} />
+                        <PageTitle heading="Đơn hàng của tôi" text={`Hiển thị tổng cộng ${orders.length} đơn hàng`} linkText={'Quay lại trang chủ'} />
 
                         <div className="space-y-6">
                             {orders.map((order) => (
@@ -38,7 +38,7 @@ export default function Orders() {
                 )
             ) : (
                 <div className="min-h-[80vh] mx-6 flex items-center justify-center text-slate-400">
-                    <h1 className="text-2xl sm:text-4xl font-semibold">You have no orders</h1>
+                    <h1 className="text-2xl sm:text-4xl font-semibold">Bạn chưa có đơn hàng nào</h1>
                 </div>
             )}
         </div>

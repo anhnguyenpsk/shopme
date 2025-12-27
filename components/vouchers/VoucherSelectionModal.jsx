@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { formatVND } from '@/lib/currency';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Ticket } from 'lucide-react';
 
 const VoucherRadioItem = ({ result, onSelect, isSelected }) => {
@@ -15,7 +15,7 @@ const VoucherRadioItem = ({ result, onSelect, isSelected }) => {
   const id = `voucher-${campaign.id}`;
 
   return (
-    <div 
+    <div
       className={`flex items-center space-x-3 rounded-md border p-3 transition-all ${isSelected ? 'border-green-500 bg-green-50' : 'border-slate-200'}`}
       onClick={() => onSelect(result)}
     >
@@ -40,12 +40,12 @@ const VoucherGroup = ({ title, results, selectedValue, onSelect }) => {
 
   return (
     <div className="mb-4">
-      <h4 className="font-semibold text-slate-700 mb-2 flex items-center"><Ticket size={16} className="mr-2"/> {title}</h4>
+      <h4 className="font-semibold text-slate-700 mb-2 flex items-center"><Ticket size={16} className="mr-2" /> {title}</h4>
       <RadioGroup value={selectedValue ? `voucher-${selectedValue.campaign.id}` : ''} className="space-y-2">
         {results.map(result => (
-          <VoucherRadioItem 
-            key={result.campaign.id} 
-            result={result} 
+          <VoucherRadioItem
+            key={result.campaign.id}
+            result={result}
             onSelect={() => onSelect(result)}
             isSelected={selectedValue?.campaign.id === result.campaign.id}
           />
@@ -121,20 +121,20 @@ export default function VoucherSelectionModal({ open, onOpenChange, onApply, car
             <div className="text-center text-red-500">{error}</div>
           ) : (
             <>
-              <VoucherGroup 
-                title="Shop Vouchers" 
-                results={validatedVouchers.SHOP} 
+              <VoucherGroup
+                title="Shop Vouchers"
+                results={validatedVouchers.SHOP}
                 selectedValue={selected.SHOP}
                 onSelect={(result) => handleSelect('SHOP', result)}
               />
-              <VoucherGroup 
-                title="ShopMe Vouchers" 
+              <VoucherGroup
+                title="ShopMe Vouchers"
                 results={validatedVouchers.PLATFORM}
                 selectedValue={selected.PLATFORM}
                 onSelect={(result) => handleSelect('PLATFORM', result)}
               />
-               <VoucherGroup 
-                title="Shipping Vouchers" 
+              <VoucherGroup
+                title="Shipping Vouchers"
                 results={validatedVouchers.SHIPPING}
                 selectedValue={selected.SHIPPING}
                 onSelect={(result) => handleSelect('SHIPPING', result)}
@@ -146,13 +146,13 @@ export default function VoucherSelectionModal({ open, onOpenChange, onApply, car
           )}
         </div>
         <DialogFooter className="sm:justify-between items-center">
-            <div className="text-sm">
-                Total Discount: <span className="font-bold text-green-600">{formatVND(totalDiscount)}</span>
-            </div>
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button onClick={handleApply}>Apply</Button>
-            </div>
+          <div className="text-sm">
+            Total Discount: <span className="font-bold text-green-600">{formatVND(totalDiscount)}</span>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button onClick={handleApply}>Apply</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

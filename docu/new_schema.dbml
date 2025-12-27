@@ -1,6 +1,6 @@
 //// ----------------------------------------------------
 //// SHOPME DATABASE SCHEMA (UPDATED)
-//// Generated from Prisma Schema - 2025-11-05
+//// Generated from Prisma Schema - 2025-12-09
 //// ----------------------------------------------------
 
 Project ShopMe {
@@ -21,6 +21,7 @@ Enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  COMPLETED
 }
 
 Enum PaymentMethod {
@@ -128,6 +129,8 @@ Table "Order" {
   paymentMethod PaymentMethod [not null]
   createdAt datetime [default: `now()`, not null]
   updatedAt datetime [not null, note: 'updated automatically']
+  deliveredAt datetime
+  completedAt datetime
 }
 
 Table OrderItem {
@@ -198,6 +201,44 @@ Table UserVoucher {
   }
 }
 
+// --- Chat System ---
+
+Table ChatSession {
+  id string [pk]
+  title string [not null]
+  createdAt datetime [default: `now()`, not null]
+  updatedAt datetime [not null, note: 'updated automatically']
+  userId string [ref: > User.id]
+}
+
+Table ChatMessage {
+  id string [pk]
+  content string [not null]
+  role string [not null]
+  createdAt datetime [default: `now()`, not null]
+  chatSessionId string [not null, ref: > ChatSession.id]
+}
+
+Table ChatLogs {
+  id string [pk]
+  sessionId string [not null, ref: > ChatSession.id]
+  userQuery string [not null]
+  detectedIntent string
+  toolUsed string
+  toolInput json
+  toolOutput json
+  finalResponse string [not null]
+  responseTime int
+  errorMessage string
+  userId string
+  createdAt datetime [default: `now()`, not null]
+  
+  Indexes {
+    (sessionId)
+    (createdAt)
+  }
+}
+
 // --- NextAuth.js Tables ---
 
 Table Account {
@@ -218,4 +259,3 @@ Table Account {
     (provider, providerAccountId) [unique]
   }
 }
-

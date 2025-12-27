@@ -13,7 +13,7 @@ const Newsletter = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Please enter your email address.');
+      toast.error('Vui lòng nhập địa chỉ email của bạn.');
       return;
     }
 
@@ -21,7 +21,7 @@ const Newsletter = () => {
     try {
       // This is a mock API call. In a real app, you would have an endpoint.
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // const response = await fetch('/api/newsletter/subscribe', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
@@ -32,11 +32,11 @@ const Newsletter = () => {
       //   throw new Error('Failed to subscribe.');
       // }
 
-      toast.success('Thank you for subscribing to our newsletter!');
+      toast.success('Cảm ơn bạn đã đăng ký nhận bản tin!');
       setEmail('');
     } catch (error) {
       console.error('Newsletter subscription error:', error);
-      toast.error('Something went wrong. Please try again later.');
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -50,15 +50,15 @@ const Newsletter = () => {
           <div className="space-y-4">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-slate-700 text-slate-200 text-sm font-medium">
               <Mail className="w-4 h-4 mr-2" />
-              Stay Updated
+              Cập nhật tin tức
             </div>
-            
+
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-              Join Our Newsletter
+              Đăng ký nhận bản tin
             </h2>
-            
+
             <p className="text-lg text-slate-300 max-w-lg">
-              Get the latest updates on new products, special offers, and exclusive deals delivered straight to your inbox.
+              Nhận thông tin mới nhất về sản phẩm, ưu đãi đặc biệt và khuyến mãi độc quyền gửi thẳng vào hộp thư của bạn.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ const Newsletter = () => {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
                   type="email"
-                  placeholder="Enter your email address"
+                  placeholder="Nhập địa chỉ email của bạn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 h-12 bg-slate-700 border-slate-600 text-white focus:ring-green-500 focus:border-green-500"
@@ -79,11 +79,11 @@ const Newsletter = () => {
               </div>
               <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700 h-12" disabled={loading}>
                 <Send className="w-5 h-5 mr-2" />
-                {loading ? 'Subscribing...' : 'Subscribe'}
+                {loading ? 'Đang đăng ký...' : 'Đăng ký'}
               </Button>
             </form>
             <p className="text-xs text-slate-400 mt-3">
-              We respect your privacy. Unsubscribe at any time.
+              Chúng tôi tôn trọng quyền riêng tư của bạn. Hủy đăng ký bất cứ lúc nào.
             </p>
           </div>
         </div>

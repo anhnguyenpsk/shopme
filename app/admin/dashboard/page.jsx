@@ -1,6 +1,6 @@
 'use client'
-import Loading from "@/components/Loading"
-import OrdersAreaChart from "@/components/OrdersAreaChart"
+import Loading from "@/components/shared/Loading"
+import OrdersAreaChart from "@/components/analytics/OrdersAreaChart"
 import { formatVND } from "@/lib/utils/currency"
 import { CircleDollarSignIcon, ShoppingBasketIcon, StoreIcon, TagsIcon } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -18,10 +18,10 @@ export default function AdminDashboard() {
     })
 
     const dashboardCardsData = [
-        { title: 'Total Products', value: dashboardData.products, icon: ShoppingBasketIcon },
-        { title: 'Total Revenue', value: formatVND(dashboardData.revenue), icon: CircleDollarSignIcon },
-        { title: 'Total Orders', value: dashboardData.orders, icon: TagsIcon },
-        { title: 'Total Stores', value: dashboardData.stores, icon: StoreIcon },
+        { title: 'Tổng sản phẩm', value: dashboardData.products, icon: ShoppingBasketIcon },
+        { title: 'Tổng doanh thu', value: formatVND(dashboardData.revenue), icon: CircleDollarSignIcon },
+        { title: 'Tổng đơn hàng', value: dashboardData.orders, icon: TagsIcon },
+        { title: 'Tổng cửa hàng', value: dashboardData.stores, icon: StoreIcon },
     ]
 
     const fetchDashboardData = async () => {
@@ -38,11 +38,11 @@ export default function AdminDashboard() {
                 });
             } else {
                 console.error('Failed to fetch admin dashboard data');
-                toast.error('Failed to load dashboard data');
+                toast.error('Không thể tải dữ liệu bảng điều khiển');
             }
         } catch (error) {
             console.error('Error fetching admin dashboard data:', error);
-            toast.error('Error loading dashboard');
+            toast.error('Lỗi khi tải bảng điều khiển');
         } finally {
             setLoading(false);
         }
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
 
     return (
         <div className="text-slate-500">
-            <h1 className="text-2xl">Admin <span className="text-slate-800 font-medium">Dashboard</span></h1>
+            <h1 className="text-2xl">Bảng điều khiển <span className="text-slate-800 font-medium">Admin</span></h1>
 
             {/* Cards */}
             <div className="flex flex-wrap gap-5 my-10 mt-4">

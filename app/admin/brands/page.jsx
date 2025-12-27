@@ -4,35 +4,35 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Search, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Tag, 
+import {
+  Search,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Tag,
   AlertCircle,
   CheckCircle,
   Edit,
@@ -43,23 +43,23 @@ import toast from 'react-hot-toast';
 export default function BrandsManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  
+
   // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchInput, setSearchInput] = useState('');
-  
+
   // Dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -89,12 +89,12 @@ export default function BrandsManagement() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
 
       const response = await fetch(`/api/admin/brands?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setBrands(data.brands);
@@ -223,10 +223,10 @@ export default function BrandsManagement() {
 
     setSubmitting(true);
     try {
-      const url = isCreating 
-        ? '/api/admin/brands' 
+      const url = isCreating
+        ? '/api/admin/brands'
         : `/api/admin/brands/${selectedBrand.id}`;
-      
+
       const method = isCreating ? 'POST' : 'PUT';
 
       const response = await fetch(url, {
@@ -284,11 +284,11 @@ export default function BrandsManagement() {
     <div className="text-slate-500">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl">
-          Brands <span className="text-slate-800 font-medium">Management</span>
+          Quản lý <span className="text-slate-800 font-medium">Thương hiệu</span>
         </h1>
         <Button onClick={openCreateDialog}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Brand
+          Thêm thương hiệu
         </Button>
       </div>
 
@@ -298,7 +298,7 @@ export default function BrandsManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Tag className="h-4 w-4" />
-              Total Brands
+              Tổng thương hiệu
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -309,7 +309,7 @@ export default function BrandsManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              Active
+              Hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -320,7 +320,7 @@ export default function BrandsManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              Inactive
+              Ngừng hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -332,17 +332,17 @@ export default function BrandsManagement() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Search by Brand Name</Label>
+              <Label htmlFor="search">Tìm kiếm theo tên thương hiệu</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search brands..."
+                  placeholder="Tìm kiếm thương hiệu..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
@@ -350,18 +350,18 @@ export default function BrandsManagement() {
               </div>
             </div>
             <div className="w-full md:w-48">
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">Lọc theo trạng thái</Label>
               <Select value={statusFilter} onValueChange={(value) => {
                 setStatusFilter(value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}>
                 <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="All Brands" />
+                  <SelectValue placeholder="Tất cả thương hiệu" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Brands</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">Tất cả thương hiệu</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -372,9 +372,9 @@ export default function BrandsManagement() {
       {/* Brands Grid */}
       <Card>
         <CardHeader>
-          <CardTitle>All Brands</CardTitle>
+          <CardTitle>Tất cả thương hiệu</CardTitle>
           <CardDescription>
-            Manage all product brands
+            Quản lý tất cả thương hiệu sản phẩm
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -384,7 +384,7 @@ export default function BrandsManagement() {
             </div>
           ) : brands.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No brands found
+              Không tìm thấy thương hiệu nào
             </div>
           ) : (
             <>
@@ -396,8 +396,8 @@ export default function BrandsManagement() {
                         <div className="flex items-center gap-3">
                           {brand.logo ? (
                             <div className="relative size-12 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden">
-                              <Image 
-                                src={brand.logo} 
+                              <Image
+                                src={brand.logo}
                                 alt={brand.name}
                                 fill
                                 className="object-contain p-1"
@@ -409,7 +409,7 @@ export default function BrandsManagement() {
                           <h3 className="font-semibold text-lg">{brand.name}</h3>
                         </div>
                         <Badge variant={brand.isActive ? 'default' : 'destructive'}>
-                          {brand.isActive ? 'Active' : 'Inactive'}
+                          {brand.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
                         </Badge>
                       </div>
                       {brand.description && (
@@ -421,7 +421,7 @@ export default function BrandsManagement() {
                         Slug: <span className="font-mono">{brand.slug}</span>
                       </p>
                       <p className="text-sm text-slate-600 mb-4">
-                        {brand._count.products} product{brand._count.products !== 1 ? 's' : ''}
+                        {brand._count.products} sản phẩm
                       </p>
                       <div className="flex gap-2">
                         <Button
@@ -431,7 +431,7 @@ export default function BrandsManagement() {
                           onClick={() => openEditDialog(brand)}
                         >
                           <Edit className="h-4 w-4 mr-1" />
-                          Edit
+                          Sửa
                         </Button>
                         <Button
                           variant="outline"
@@ -451,9 +451,9 @@ export default function BrandsManagement() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-slate-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} brands
+                  Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} trong số{' '}
+                  {pagination.total} thương hiệu
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -463,7 +463,7 @@ export default function BrandsManagement() {
                     disabled={pagination.page === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -471,7 +471,7 @@ export default function BrandsManagement() {
                     onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Next
+                    Tiếp
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -485,46 +485,46 @@ export default function BrandsManagement() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isCreating ? 'Create New Brand' : 'Edit Brand'}</DialogTitle>
+            <DialogTitle>{isCreating ? 'Tạo thương hiệu mới' : 'Chỉnh sửa thương hiệu'}</DialogTitle>
             <DialogDescription>
-              {isCreating 
-                ? 'Add a new brand to the system.' 
-                : 'Update brand information.'}
+              {isCreating
+                ? 'Thêm danh mục mới vào hệ thống.'
+                : 'Cập nhật thông tin danh mục.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="brand-name">Brand Name *</Label>
+              <Label htmlFor="brand-name">Tên thương hiệu *</Label>
               <Input
                 id="brand-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Nike, Adidas"
+                placeholder="ví dụ: Nike, Rolex"
               />
               {formErrors.name && (
                 <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="brand-slug">Slug (optional)</Label>
+              <Label htmlFor="brand-slug">Slug (tùy chọn)</Label>
               <Input
                 id="brand-slug"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="Leave empty to auto-generate"
+                placeholder="Để trống để tự động tạo"
               />
               <p className="text-xs text-slate-500 mt-1">
-                URL-friendly identifier. Auto-generated from name if left empty.
+                Định danh thân thiện với URL. Tự động tạo từ tên nếu để trống.
               </p>
             </div>
             <div>
-              <Label htmlFor="brand-logo">Brand Logo *</Label>
+              <Label htmlFor="brand-logo">Logo thương hiệu *</Label>
               <div className="flex items-center gap-4">
                 {logoPreview && (
                   <div className="relative size-20 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
-                    <Image 
-                      src={logoPreview} 
-                      alt="Logo preview"
+                    <Image
+                      src={logoPreview}
+                      alt="Xem trước logo"
                       fill
                       className="object-contain p-2"
                     />
@@ -539,35 +539,35 @@ export default function BrandsManagement() {
                     disabled={uploadingLogo}
                   />
                   <p className="text-xs text-slate-500 mt-1">
-                    Max 2MB. Formats: JPG, PNG, GIF, WEBP
+                    Tối đa 2MB. Định dạng: JPG, PNG, GIF, WEBP
                   </p>
                   {formErrors.logo && (
                     <p className="text-sm text-red-600 mt-1">{formErrors.logo}</p>
                   )}
                   {uploadingLogo && (
-                    <p className="text-sm text-blue-600 mt-1">Uploading...</p>
+                    <p className="text-sm text-blue-600 mt-1">Đang tải lên...</p>
                   )}
                 </div>
               </div>
             </div>
             <div>
-              <Label htmlFor="brand-description">Description (optional)</Label>
+              <Label htmlFor="brand-description">Mô tả (tùy chọn)</Label>
               <Textarea
                 id="brand-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of the brand"
+                placeholder="Mô tả tóm tắt về thương hiệu"
                 rows={3}
               />
               <p className="text-xs text-slate-500 mt-1">
-                A simple description about this brand
+                Một đoạn mô tả ngắn về thương hiệu này
               </p>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="brand-active">Active Status</Label>
+                <Label htmlFor="brand-active">Trạng thái hoạt động</Label>
                 <p className="text-xs text-slate-500">
-                  Inactive brands won't appear in product listings
+                  Thương hiệu không hoạt động sẽ không xuất hiện trong danh sách
                 </p>
               </div>
               <Switch
@@ -579,10 +579,10 @@ export default function BrandsManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={submitting}>
-              Cancel
+              Hủy
             </Button>
             <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Saving...' : (isCreating ? 'Create Brand' : 'Update Brand')}
+              {submitting ? 'Đang lưu...' : (isCreating ? 'Tạo thương hiệu' : 'Cập nhật thương hiệu')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -592,23 +592,23 @@ export default function BrandsManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Brand</DialogTitle>
+            <DialogTitle>Xóa thương hiệu</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedBrand?.name}"? 
-              This action cannot be undone.
+              Bạn có chắc chắn muốn xóa "{selectedBrand?.name}"?
+              Hành động này không thể hoàn tác.
               {selectedBrand?._count?.products > 0 && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  Warning: This brand has {selectedBrand._count.products} product(s) associated with it.
+                  Cảnh báo: Thương hiệu này đang có {selectedBrand._count.products} sản phẩm liên kết.
                 </span>
               )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
+              Hủy
             </Button>
             <Button variant="destructive" onClick={handleDeleteBrand}>
-              Delete Brand
+              Xóa thương hiệu
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -3,33 +3,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Package, 
+import {
+  Search,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Package,
   AlertCircle,
   CheckCircle,
   Eye
@@ -41,18 +41,18 @@ import { formatVND } from '@/lib/utils/currency';
 export default function ProductsManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, inStock: 0, outOfStock: 0 });
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
-  
+
   // Filters
   const [search, setSearch] = useState('');
   const [storeFilter, setStoreFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [searchInput, setSearchInput] = useState('');
-  
+
   // Dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -74,13 +74,13 @@ export default function ProductsManagement() {
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       });
-      
+
       if (search) params.append('search', search);
       if (storeFilter && storeFilter !== 'all') params.append('storeId', storeFilter);
       if (stockFilter && stockFilter !== 'all') params.append('inStock', stockFilter);
 
       const response = await fetch(`/api/admin/products?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setProducts(data.products);
@@ -153,7 +153,7 @@ export default function ProductsManagement() {
   return (
     <div className="text-slate-500">
       <h1 className="text-2xl mb-6">
-        Products <span className="text-slate-800 font-medium">Management</span>
+        Quản lý <span className="text-slate-800 font-medium">Sản phẩm</span>
       </h1>
 
       {/* Statistics Cards */}
@@ -162,7 +162,7 @@ export default function ProductsManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Package className="h-4 w-4" />
-              Total Products
+              Tổng sản phẩm
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -173,7 +173,7 @@ export default function ProductsManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              In Stock
+              Còn hàng
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -184,7 +184,7 @@ export default function ProductsManagement() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              Out of Stock
+              Hết hàng
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -196,17 +196,17 @@ export default function ProductsManagement() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Label htmlFor="search">Search by Product Name</Label>
+              <Label htmlFor="search">Tìm kiếm theo tên sản phẩm</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search products..."
+                  placeholder="Tìm kiếm sản phẩm..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
@@ -214,18 +214,18 @@ export default function ProductsManagement() {
               </div>
             </div>
             <div className="w-full md:w-48">
-              <Label htmlFor="stock-filter">Filter by Stock</Label>
+              <Label htmlFor="stock-filter">Lọc theo kho</Label>
               <Select value={stockFilter} onValueChange={(value) => {
                 setStockFilter(value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}>
                 <SelectTrigger id="stock-filter">
-                  <SelectValue placeholder="All Products" />
+                  <SelectValue placeholder="Tất cả sản phẩm" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Products</SelectItem>
-                  <SelectItem value="true">In Stock</SelectItem>
-                  <SelectItem value="false">Out of Stock</SelectItem>
+                  <SelectItem value="all">Tất cả sản phẩm</SelectItem>
+                  <SelectItem value="true">Còn hàng</SelectItem>
+                  <SelectItem value="false">Hết hàng</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -236,9 +236,9 @@ export default function ProductsManagement() {
       {/* Products Grid */}
       <Card>
         <CardHeader>
-          <CardTitle>All Products</CardTitle>
+          <CardTitle>Tất cả sản phẩm</CardTitle>
           <CardDescription>
-            View and manage products from all stores
+            Xem và quản lý sản phẩm từ tất cả cửa hàng
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -248,7 +248,7 @@ export default function ProductsManagement() {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No products found
+              Không tìm thấy sản phẩm nào
             </div>
           ) : (
             <>
@@ -297,7 +297,7 @@ export default function ProductsManagement() {
                           onClick={() => openDetailDialog(product)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          View
+                          Xem
                         </Button>
                         <Button
                           variant="outline"
@@ -316,9 +316,9 @@ export default function ProductsManagement() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-slate-600">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} products
+                  Hiển thị {((pagination.page - 1) * pagination.limit) + 1} đến{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} trong số{' '}
+                  {pagination.total} sản phẩm
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -328,7 +328,7 @@ export default function ProductsManagement() {
                     disabled={pagination.page === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -336,7 +336,7 @@ export default function ProductsManagement() {
                     onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Next
+                    Tiếp
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -350,7 +350,7 @@ export default function ProductsManagement() {
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Product Details</DialogTitle>
+            <DialogTitle>Chi tiết sản phẩm</DialogTitle>
           </DialogHeader>
           {selectedProduct && (
             <div className="space-y-4">
@@ -372,36 +372,36 @@ export default function ProductsManagement() {
               <div>
                 <h3 className="font-semibold text-lg mb-2">{selectedProduct.name}</h3>
                 <p className="text-slate-600 mb-4">{selectedProduct.description}</p>
-                
+
                 <div className="bg-slate-50 p-4 rounded-lg space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Price:</span>
+                    <span className="text-slate-600">Giá:</span>
                     <span className="font-semibold text-lg">{formatVND(selectedProduct.price)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Status:</span>
+                    <span className="text-slate-600">Trạng thái:</span>
                     <Badge variant={selectedProduct.isActive ? 'default' : 'destructive'}>
-                      {selectedProduct.isActive ? 'Active' : 'Inactive'}
+                      {selectedProduct.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Quantity:</span>
+                    <span className="text-slate-600">Số lượng:</span>
                     <span className="font-medium">{selectedProduct.quantity}</span>
                   </div>
                   {selectedProduct.categoryRef && (
                     <div className="flex justify-between">
-                      <span className="text-slate-600">Category:</span>
+                      <span className="text-slate-600">Danh mục:</span>
                       <span className="font-medium">{selectedProduct.categoryRef.name}</span>
                     </div>
                   )}
                   {selectedProduct.brandRef && (
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Brand:</span>
+                      <span className="text-slate-600">Thương hiệu:</span>
                       <div className="flex items-center gap-2">
                         {selectedProduct.brandRef.logo && (
                           <div className="relative size-6">
-                            <Image 
-                              src={selectedProduct.brandRef.logo} 
+                            <Image
+                              src={selectedProduct.brandRef.logo}
                               alt={selectedProduct.brandRef.name}
                               fill
                               className="object-contain"
@@ -414,9 +414,9 @@ export default function ProductsManagement() {
                   )}
                   {selectedProduct.averageRating > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-slate-600">Rating:</span>
+                      <span className="text-slate-600">Đánh giá:</span>
                       <span className="font-medium">
-                        ★ {selectedProduct.averageRating.toFixed(1)} ({selectedProduct.ratingCount} reviews)
+                        ★ {selectedProduct.averageRating.toFixed(1)} ({selectedProduct.ratingCount} đánh giá)
                       </span>
                     </div>
                   )}
@@ -425,7 +425,7 @@ export default function ProductsManagement() {
 
               {/* Store Info */}
               <div>
-                <h4 className="font-semibold mb-2">Store Information</h4>
+                <h4 className="font-semibold mb-2">Thông tin cửa hàng</h4>
                 <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-lg">
                   {selectedProduct.store.logo && (
                     <Image
@@ -451,18 +451,18 @@ export default function ProductsManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>Báo cáo vi phạm / Xóa sản phẩm</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedProduct?.name}"? 
-              This action cannot be undone and will remove the product from {selectedProduct?.store?.name}'s store.
+              Bạn có chắc chắn muốn xóa "{selectedProduct?.name}"?
+              Hành động này không thể hoàn tác và sẽ xóa sản phẩm khỏi cửa hàng của {selectedProduct?.store?.name}.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
+              Hủy
             </Button>
             <Button variant="destructive" onClick={handleDeleteProduct}>
-              Delete Product
+              Xóa sản phẩm
             </Button>
           </DialogFooter>
         </DialogContent>

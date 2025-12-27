@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import toast from 'react-hot-toast';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 
 const ProductSelectorDialog = ({ open, onOpenChange, onSelect, initialSelectedIds = [] }) => {
   const [products, setProducts] = useState([]);
@@ -47,7 +47,7 @@ const ProductSelectorDialog = ({ open, onOpenChange, onSelect, initialSelectedId
     setSelectedProducts(newSelection);
   };
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -63,7 +63,7 @@ const ProductSelectorDialog = ({ open, onOpenChange, onSelect, initialSelectedId
           <DialogTitle>Select Applicable Products</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Input 
+          <Input
             placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

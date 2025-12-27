@@ -59,7 +59,20 @@ entity "Product" {
   *<u>storeId</u>* : String <<FK>>
   *<u>categoryId</u>* : String <<FK>>
   *<u>brandId</u>* : String <<FK>>
+  hasVariations : Boolean
+  variationGroups: Json
   ' ... other fields
+}
+
+entity "ProductVariant" {
+  * **id** : String <<PK>>
+  * **<u>productId</u>** : String <<FK>>
+  --
+  attributes : Json
+  price : Float
+  quantity : Int
+  sku: String
+  images: String[]
 }
 
 entity "Category" {
@@ -67,6 +80,7 @@ entity "Category" {
   --
   name : String <<unique>>
   slug : String <<unique>>
+  *<u>parentId</u>* : String <<FK>>
 }
 
 entity "Brand" {
@@ -86,6 +100,8 @@ entity "Order" {
   *<u>userId</u>* : String <<FK>>
   *<u>storeId</u>* : String <<FK>>
   *<u>addressId</u>* : String <<FK>>
+  deliveredAt : DateTime
+  completedAt : DateTime
   ' ... other fields
 }
 
@@ -95,6 +111,7 @@ entity "OrderItem" {
   --
   quantity : Int
   price : Float
+  *<u>variantId</u>* : String <<FK>>
 }
 
 entity "Address" {
@@ -154,19 +171,58 @@ package "NextAuth" {
 
 ' --- Relationships Definition ---
 
+entity "ChatSession" {
+  * **id** : String <<PK>>
+  --
+  title : String
+  createdAt : DateTime
+  updatedAt : DateTime
+  *<u>userId</u>* : String <<FK>>
+}
+
+entity "ChatMessage" {
+  * **id** : String <<PK>>
+  --
+  content : String
+  role : String
+  createdAt : DateTime
+  *<u>chatSessionId</u>* : String <<FK>>
+}
+
+entity "ChatLogs" {
+  * **id** : String <<PK>>
+  --
+  sessionId : String
+  userQuery : String
+  detectedIntent : String
+  toolUsed : String
+  toolInput : Json
+  toolOutput : Json
+  finalResponse : String
+  responseTime : Int
+  errorMessage : String
+  userId : String
+  createdAt : DateTime
+}
+
+' --- Relationships Definition ---
+
 User                               ||--o|  Store                 : "owns"
 User                               ||--o{ Account               : "has"
 User                               ||--o{ Address               : "has"
 User                               ||--o{ Order                 : "places"
 User                               ||--o{ Rating                : "gives"
 User                               ||--o{ UserVoucher           : "collects"
+User                               ||--o{ ChatSession           : "has"
 
 Store                              ||--o{ Product               : "sells"
 Store                              ||--o{ Order                 : "receives"
 Store                              }o--|| VoucherCampaign       : "creates"
 
 Category                           }o--|| Product               : "categorizes"
+Category                           }o--|| Product               : "categorizes"
 Category                           }o--o{ VoucherCampaign       : "can apply to"
+Category                           |o--o{ Category              : "parent of"
 Brand                              }o--|| Product               : "is of"
 
 Order                              ||--o{ OrderItem             : "contains"
@@ -175,9 +231,15 @@ Address                            }o--|| Order                 : "ships to"
 
 Product                            ||--o{ OrderItem             : "is in"
 Product                            ||--o{ Rating                : "has"
+Product                            ||--o{ OrderItem             : "is in"
+Product                            ||--o{ Rating                : "has"
 Product                            }o--o{ VoucherCampaign       : "can apply to"
+Product                            ||--o{ ProductVariant        : "has variations"
+
+ProductVariant                     ||--o{ OrderItem             : "is in"
 
 VoucherCampaign                    ||--o{ UserVoucher           : "is instance of"
 
-@enduml
+ChatSession                        ||--o{ ChatMessage           : "contains"
+
 ```

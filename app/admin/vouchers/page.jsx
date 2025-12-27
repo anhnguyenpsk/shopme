@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/Loading';
+import Loading from '@/components/shared/Loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -17,7 +17,7 @@ import { formatVND } from '@/lib/currency';
 export default function VouchersManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,16 +38,16 @@ export default function VouchersManagement() {
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/vouchers`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setVouchers(data.data);
       } else {
-        toast.error('Failed to fetch vouchers');
+        toast.error('Lỗi khi tải danh sách voucher');
       }
     } catch (error) {
       console.error('Error fetching vouchers:', error);
-      toast.error('Error fetching vouchers');
+      toast.error('Lỗi khi tải danh sách voucher');
     } finally {
       setLoading(false);
     }
@@ -73,16 +73,16 @@ export default function VouchersManagement() {
       });
 
       if (response.ok) {
-        toast.success(`Voucher ${editingVoucher ? 'updated' : 'created'} successfully!`);
+        toast.success(`Voucher đã được ${editingVoucher ? 'cập nhật' : 'tạo'} thành công!`);
         setIsDialogOpen(false);
         setEditingVoucher(null);
         fetchVouchers();
       } else {
         const error = await response.json();
-        toast.error(error.error || 'An error occurred.');
+        toast.error(error.error || 'Đã xảy ra lỗi.');
       }
     } catch (error) {
-      toast.error('An error occurred.');
+      toast.error('Đã xảy ra lỗi.');
     }
   };
 
@@ -137,19 +137,19 @@ export default function VouchersManagement() {
     <div className="text-slate-500">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl">
-          Vouchers <span className="text-slate-800 font-medium">Management</span>
+          Quản lý <span className="text-slate-800 font-medium">Voucher</span>
         </h1>
         <Button onClick={openCreateDialog}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Voucher
+          Thêm Voucher
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Vouchers</CardTitle>
+          <CardTitle>Tất cả Voucher</CardTitle>
           <CardDescription>
-            Manage all platform and shipping vouchers
+            Quản lý mã giảm giá của nền tảng và vận chuyển
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,21 +159,21 @@ export default function VouchersManagement() {
             </div>
           ) : vouchers.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No vouchers found
+              Không tìm thấy voucher nào
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Discount</TableHead>
-                  <TableHead>Usage</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Tên</TableHead>
+                  <TableHead>Mã</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Giảm giá</TableHead>
+                  <TableHead>Sử dụng</TableHead>
+                  <TableHead>Ngày bắt đầu</TableHead>
+                  <TableHead>Ngày kết thúc</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -188,15 +188,15 @@ export default function VouchersManagement() {
                     </TableCell>
                     <TableCell>
                       {voucher.discount_type === 'PERCENTAGE'
-                        ? `${voucher.discount_value}% (max ${formatVND(voucher.max_discount_amount)})`
+                        ? `${voucher.discount_value}% (tối đa ${formatVND(voucher.max_discount_amount)})`
                         : formatVND(voucher.discount_value)}
                     </TableCell>
                     <TableCell>{voucher._count.userVouchers} / {voucher.total_usage_limit}</TableCell>
-                    <TableCell>{new Date(voucher.start_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(voucher.end_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(voucher.start_date).toLocaleDateString('vi-VN')}</TableCell>
+                    <TableCell>{new Date(voucher.end_date).toLocaleDateString('vi-VN')}</TableCell>
                     <TableCell>
                       <Badge variant={voucher.status === 'ACTIVE' ? 'default' : 'destructive'}>
-                        {voucher.status}
+                        {voucher.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -220,7 +220,7 @@ export default function VouchersManagement() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingVoucher ? 'Edit Voucher' : 'Create New Voucher'}</DialogTitle>
+            <DialogTitle>{editingVoucher ? 'Chỉnh sửa Voucher' : 'Tạo Voucher Mới'}</DialogTitle>
           </DialogHeader>
           <VoucherForm
             mode={editingVoucher ? 'edit' : 'create'}
@@ -234,14 +234,14 @@ export default function VouchersManagement() {
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure?</DialogTitle>
+            <DialogTitle>Bạn có chắc chắn?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the voucher.
+              Hành động này không thể hoàn tác. Điều này sẽ xóa vĩnh viễn voucher này.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Hủy</Button>
+            <Button variant="destructive" onClick={handleDelete}>Xóa</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

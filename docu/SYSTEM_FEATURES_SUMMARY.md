@@ -4,13 +4,14 @@
 
 **Tên dự án:** ShopMe - Multi-vendor E-commerce Platform  
 **Công nghệ:** Next.js 15, React 19, Prisma, PostgreSQL, NextAuth.js, Stripe  
-**Ngày cập nhật:** 5 tháng 11, 2025
+**Ngày cập nhật:** 9 tháng 12, 2025
 
 ---
 
 ## 🎯 Tổng quan Hệ thống
 
 ShopMe là nền tảng thương mại điện tử đa nhà cung cấp (multi-vendor) cho phép:
+
 - **Khách hàng:** Duyệt, mua sắm và đánh giá sản phẩm từ nhiều cửa hàng
 - **Chủ cửa hàng:** Đăng ký, quản lý cửa hàng và sản phẩm của riêng họ
 - **Admin:** Quản lý toàn bộ hệ thống, duyệt cửa hàng, quản lý người dùng và nội dung
@@ -20,11 +21,13 @@ ShopMe là nền tảng thương mại điện tử đa nhà cung cấp (multi-v
 ## 👥 Hệ thống Phân quyền
 
 ### 1. Vai trò (Roles)
+
 - **CUSTOMER** - Khách hàng mua sắm
 - **STORE_OWNER** - Chủ cửa hàng
 - **ADMIN** - Quản trị viên hệ thống
 
 ### 2. Quyền truy cập
+
 Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API endpoints.
 
 ---
@@ -32,23 +35,28 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 🔐 Xác thực & Bảo mật
 
 ### 1. NextAuth.js Authentication
+
 - **Credential-based login:** Email + Password
 - **Password hashing:** Bcrypt
 - **Session strategy:** JWT (không dùng database session)
 - **Email verification:** Mã xác thực 6 chữ số gửi qua email
 
 ### 2. Tính năng Xác thực
+
 #### Đăng ký (Registration)
+
 - Đăng ký tài khoản với email và password
 - Xác thực email qua mã 6 chữ số
 - Hệ thống gửi email tự động qua Nodemailer
 
 #### Đăng nhập (Login)
+
 - Đăng nhập bằng email/password
 - Kiểm tra tài khoản có bị vô hiệu hóa không
 - Tự động redirect theo vai trò
 
 #### Quản lý Tài khoản
+
 - Cập nhật thông tin cá nhân (tên, ảnh đại diện, phone, gender, ngày sinh)
 - Đổi mật khẩu (có script reset password)
 - Admin có thể vô hiệu hóa tài khoản người dùng
@@ -58,15 +66,23 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 🛍️ Tính năng Khách hàng (CUSTOMER)
 
 ### 1. Duyệt & Tìm kiếm Sản phẩm
+
 - **Trang chủ:** Hiển thị sản phẩm mới nhất, bán chạy nhất
 - **Danh mục sản phẩm:** Lọc theo category và brand
 - **Tìm kiếm:** Tìm kiếm sản phẩm theo từ khóa
-- **Chi tiết sản phẩm:** 
+- **Chi tiết sản phẩm:**
   - Xem hình ảnh, mô tả, giá
   - Xem đánh giá và rating từ người mua khác
   - Kiểm tra số lượng tồn kho
 
+### 1b. Trợ lý ảo AI (Chatbot)
+
+- Hỗ trợ tìm kiếm sản phẩm thông minh bằng ngôn ngữ tự nhiên
+- Kiểm tra khuyến mãi và đề xuất sản phẩm phù hợp
+- Tương tác trực tiếp qua cửa sổ chat
+
 ### 2. Giỏ hàng (Cart)
+
 - **Quản lý giỏ hàng:**
   - Thêm/xóa sản phẩm
   - Điều chỉnh số lượng
@@ -81,16 +97,20 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Sync cart khi login từ thiết bị khác
 
 ### 3. Địa chỉ giao hàng
+
 - Thêm/sửa/xóa địa chỉ
 - Chọn địa chỉ mặc định cho đơn hàng
 - Thông tin: tên, số điện thoại, địa chỉ đầy đủ
 
 ### 4. Thanh toán & Đơn hàng
+
 #### Phương thức thanh toán
+
 - **COD (Cash on Delivery):** Thanh toán khi nhận hàng
 - **Stripe:** Thanh toán online bằng thẻ
 
 #### Quy trình đặt hàng
+
 1. Chọn sản phẩm trong giỏ hàng
 2. Chọn địa chỉ giao hàng
 3. Áp dụng mã giảm giá (nếu có)
@@ -102,34 +122,37 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
    - Gửi email xác nhận (qua Inngest)
 
 #### Stripe Payment Integration
+
 - Webhook xử lý thanh toán thành công/thất bại
 - Tự động tạo đơn hàng khi thanh toán thành công
 - Xử lý payment intent metadata
 
 #### Quản lý Đơn hàng
+
 - Xem lịch sử đơn hàng
 - Theo dõi trạng thái: ORDER_PLACED → PROCESSING → SHIPPED → DELIVERED
 - Xem chi tiết từng đơn hàng
 
 ### 5. Đánh giá & Rating
+
 - Đánh giá sản phẩm đã mua (1-5 sao)
 - Viết review chi tiết
 - Chỉ có thể đánh giá sau khi đơn hàng DELIVERED
 - Mỗi sản phẩm trong mỗi đơn hàng chỉ đánh giá 1 lần
 
-### 6. Mã giảm giá (Coupons)
-- Áp dụng mã giảm giá khi thanh toán
-- Hệ thống hỗ trợ:
-  - Mã công khai/riêng tư
-  - Mã cho người dùng mới
-  - Mã cho thành viên
-  - Kiểm tra hạn sử dụng
+### 6. Hệ thống Voucher & Khuyến mãi (New)
+
+- **Voucher Campaign:** Admin và Chủ shop tạo các chiến dịch khuyến mãi (Giảm tiền/%, Free ship)
+- **Sưu tầm Voucher:** Người dùng lưu voucher vào kho cá nhân
+- **Sử dụng:** Hệ thống tự động kiểm tra điều kiện (min order, category...) khi thanh toán
+- **Quản lý:** Theo dõi số lượt dùng, thời gian hiệu lực
 
 ---
 
 ## 🏪 Tính năng Chủ cửa hàng (STORE_OWNER)
 
 ### 1. Đăng ký Cửa hàng
+
 - **Quy trình:**
   1. Khách hàng điền form đăng ký cửa hàng
   2. Upload logo cửa hàng
@@ -143,6 +166,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Logo
 
 ### 2. Quản lý Cửa hàng
+
 - **Cài đặt cửa hàng:**
   - Cập nhật thông tin cửa hàng
   - Thay đổi logo
@@ -153,10 +177,14 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Biểu đồ theo thời gian
 
 ### 3. Quản lý Sản phẩm
+
 - **Thêm sản phẩm mới:**
   - Tên, mô tả, giá
   - Upload nhiều hình ảnh
   - Chọn category và brand
+  - **Biến thể (Variations):**
+    - Thiết lập nhóm biến thể (Size, Color...)
+    - Quản lý giá và tồn kho cho từng biến thể
   - Đặt số lượng tồn kho
 - **Chỉnh sửa sản phẩm:**
   - Cập nhật thông tin
@@ -171,6 +199,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Cảnh báo hết hàng
 
 ### 4. Quản lý Đơn hàng
+
 - **Xem đơn hàng:**
   - Danh sách tất cả đơn hàng của cửa hàng
   - Lọc theo trạng thái
@@ -189,11 +218,13 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 👨‍💼 Tính năng Admin (ADMIN)
 
 ### 1. Dashboard
+
 - Tổng quan toàn hệ thống
 - Thống kê người dùng, cửa hàng, sản phẩm, đơn hàng
 - Biểu đồ doanh thu
 
 ### 2. Quản lý Người dùng
+
 - **Xem danh sách người dùng:**
   - Lọc theo vai trò (CUSTOMER, STORE_OWNER, ADMIN)
   - Tìm kiếm theo email
@@ -203,6 +234,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Xem lịch sử mua hàng của khách hàng
 
 ### 3. Quản lý Cửa hàng
+
 - **Duyệt cửa hàng:**
   - Xem danh sách đơn đăng ký (PENDING)
   - Duyệt (APPROVED) hoặc từ chối (REJECTED)
@@ -218,27 +250,32 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Thống kê doanh thu
 
 ### 4. Quản lý Category (Danh mục)
+
 - Thêm/sửa/xóa danh mục sản phẩm
 - Tạo slug tự động cho URL
 - Bật/tắt danh mục (isActive)
 
 ### 5. Quản lý Brand (Thương hiệu)
+
 - Thêm/sửa/xóa thương hiệu
 - Upload logo thương hiệu
 - Thêm mô tả thương hiệu
 - Bật/tắt thương hiệu (isActive)
 
 ### 6. Quản lý Sản phẩm
+
 - Xem tất cả sản phẩm trong hệ thống
 - Vô hiệu hóa sản phẩm vi phạm
 - Xóa sản phẩm
 
 ### 7. Quản lý Đơn hàng
+
 - Xem tất cả đơn hàng
 - Theo dõi trạng thái đơn hàng
 - Xem chi tiết đơn hàng
 
 ### 8. Quản lý Mã giảm giá (Coupons)
+
 - **Tạo mã giảm giá:**
   - Mã code (unique)
   - Mức giảm giá (%)
@@ -253,6 +290,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 🔧 Tính năng Kỹ thuật
 
 ### 1. Upload & Media Management
+
 - **ImageKit Integration:**
   - Upload hình ảnh sản phẩm
   - Upload logo cửa hàng, thương hiệu
@@ -261,6 +299,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Lưu trữ tạm thời trong `/public/uploads`
 
 ### 2. Email System (Inngest)
+
 - **Background Jobs:**
   - Gửi email xác thực tài khoản
   - Gửi email xác nhận đơn hàng
@@ -270,6 +309,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Order confirmation
 
 ### 3. State Management
+
 - **Redux Toolkit:**
   - Quản lý cart state
   - User state
@@ -279,6 +319,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Real-time updates
 
 ### 4. Database
+
 - **Prisma ORM:**
   - Type-safe database queries
   - Migration management
@@ -288,6 +329,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Connection pooling
 
 ### 5. API Structure
+
 - **REST API:**
   - `/api/auth/*` - Authentication
   - `/api/user/*` - User operations
@@ -298,6 +340,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - `/api/stripe/*` - Payment integration
 
 ### 6. Security Features
+
 - **Password hashing:** Bcrypt
 - **JWT tokens:** Secure session management
 - **Email verification:** 6-digit code với expiry
@@ -311,6 +354,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 📊 Database Schema
 
 ### Core Tables
+
 - **User** - Người dùng (14 fields, includes isActive)
 - **Store** - Cửa hàng (13 fields)
 - **Product** - Sản phẩm (13 fields, includes quantity & isActive)
@@ -320,10 +364,13 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 - **OrderItem** - Chi tiết đơn hàng (4 fields, composite PK)
 - **Address** - Địa chỉ (9 fields)
 - **Rating** - Đánh giá (8 fields)
-- **Coupon** - Mã giảm giá (8 fields)
+- **VoucherCampaign** - Chiến dịch khuyến mãi (New)
+- **UserVoucher** - Voucher người dùng đã lưu (New)
+- **ChatSession/Message/Logs** - Hệ thống Chat AI (New)
 - **Account** - NextAuth accounts (12 fields)
 
 ### Key Relationships
+
 - User 1:1 Store (one-to-one)
 - Store 1:N Products
 - Store 1:N Orders
@@ -339,12 +386,14 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 🎨 Frontend Features
 
 ### 1. UI Components (Shadcn/ui)
+
 - Button, Dialog, Select, Switch
 - Label, Checkbox
 - Responsive design
 - Dark mode ready
 
 ### 2. Pages
+
 - **Public:**
   - Homepage với hero, categories, products
   - Product listing & detail
@@ -366,6 +415,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
   - Content management
 
 ### 3. Features
+
 - **Responsive design:** Mobile-first
 - **Loading states:** Skeleton loaders
 - **Toast notifications:** React Hot Toast
@@ -378,6 +428,7 @@ Mỗi vai trò có quyền truy cập khác nhau vào các tính năng và API e
 ## 🚀 Deployment & DevOps
 
 ### Environment Variables Required
+
 ```env
 DATABASE_URL=          # PostgreSQL connection
 DIRECT_URL=           # Direct database connection
@@ -391,6 +442,7 @@ INNGEST_*=            # Inngest configuration
 ```
 
 ### Scripts
+
 - `npm run dev` - Development server
 - `npm run build` - Production build
 - `npm run db:migrate` - Run migrations
@@ -401,6 +453,7 @@ INNGEST_*=            # Inngest configuration
 ## 📈 Business Logic
 
 ### Order Creation Flow
+
 1. User selects products in cart
 2. Chooses delivery address
 3. Applies coupon (optional)
@@ -415,6 +468,7 @@ INNGEST_*=            # Inngest configuration
 9. Sends confirmation email
 
 ### Store Approval Flow
+
 1. Customer registers store → PENDING
 2. Admin reviews application
 3. Admin approves → APPROVED
@@ -422,6 +476,7 @@ INNGEST_*=            # Inngest configuration
 5. Store can start listing products
 
 ### Inventory Management
+
 - Real-time stock tracking
 - Atomic deduction on order creation
 - Prevents overselling
@@ -433,6 +488,7 @@ INNGEST_*=            # Inngest configuration
 ## 🔄 Recent Updates & Features
 
 ### Implemented Features (2024-2025)
+
 ✅ User account active/inactive toggle  
 ✅ Product active/inactive toggle  
 ✅ Store active/inactive toggle  
@@ -448,6 +504,10 @@ INNGEST_*=            # Inngest configuration
 ✅ Stripe payment integration  
 ✅ Order quantity validation  
 ✅ Cart logout cleanup  
+✅ **Hệ thống biến thể sản phẩm (Product Variations)**
+✅ **Hệ thống Voucher mới (Campaigns & Collection)**
+✅ **Subcategories (Danh mục con)**
+✅ **AI Chatbot (Gemini Integration)**
 
 ---
 
@@ -460,7 +520,4 @@ INNGEST_*=            # Inngest configuration
 
 ---
 
-**Tài liệu này được cập nhật dựa trên codebase thực tế ngày 5/11/2025**
-
-
-
+**Tài liệu này được cập nhật dựa trên codebase thực tế ngày 9/12/2025**

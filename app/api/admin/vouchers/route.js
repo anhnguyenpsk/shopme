@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession, isHttpError } from "@/lib/auth/guards";
 
+export const dynamic = 'force-dynamic';
+
 export const ADMIN_VOUCHER_TYPES = new Set(["PLATFORM", "SHIPPING"]);
 
 function parseIntParam(value, defaultValue) {

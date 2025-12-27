@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/authOptions';
+
+export const dynamic = 'force-dynamic';
 
 // Helper to generate slug from name
 function generateSlug(name) {
@@ -31,7 +33,7 @@ export async function GET(request) {
 
     // Build where clause
     const where = {};
-    
+
     if (search) {
       where.name = {
         contains: search,
@@ -55,6 +57,9 @@ export async function GET(request) {
         include: {
           _count: {
             select: { products: true },
+          },
+          parent: {
+            select: { name: true },
           },
         },
       }),
@@ -135,6 +140,7 @@ export async function POST(request) {
         name: name.trim(),
         slug,
         isActive: isActive !== undefined ? isActive : true,
+        parentId: body.parentId || null,
       },
     });
 
